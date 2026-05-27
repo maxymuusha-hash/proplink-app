@@ -1,0 +1,149 @@
+import React from 'react';
+import { Building2, Search, ArrowRight, Home, Briefcase, Key, ShoppingBag } from 'lucide-react';
+
+interface HeroSectionProps {
+  onBrowseProperties: () => void;
+  onListProperty: () => void;
+  onLogin: () => void;
+  isLoggedIn: boolean;
+}
+
+const HeroSection: React.FC<HeroSectionProps> = ({ 
+  onBrowseProperties, 
+  onListProperty,
+  onLogin,
+  isLoggedIn
+}) => {
+  return (
+    <section className="relative overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0">
+        <img 
+          src="https://d64gsuwffb70l.cloudfront.net/6946db6198d16b00e323578d_1766251466743_1116cebf.jpg"
+          alt="Property Hero"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-900/95 via-gray-900/80 to-gray-900/60"></div>
+      </div>
+
+      {/* Content */}
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+        <div className="max-w-3xl">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-cyan-500/20 text-cyan-300 px-4 py-2 rounded-full mb-6">
+            <Building2 className="w-4 h-4" />
+            <span className="text-sm font-medium">Zimbabwe's Trusted Property Marketplace</span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+            Find Your Perfect
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400"> Property </span>
+            Today
+          </h1>
+
+          {/* Subheadline */}
+          <p className="text-xl text-gray-300 mb-8 max-w-2xl">
+            Connect directly with property owners. Browse thousands of residential and commercial 
+            properties for rent or sale across Zimbabwe.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-12">
+            <button
+              onClick={onBrowseProperties}
+              className="flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg shadow-cyan-500/25"
+            >
+              <Search className="w-5 h-5" />
+              Browse Properties
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            <button
+              onClick={isLoggedIn ? onListProperty : onLogin}
+              className="flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white border border-white/30 rounded-xl font-semibold hover:bg-white/20 transition-all"
+            >
+              <Building2 className="w-5 h-5" />
+              List Your Property Free
+            </button>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center md:text-left">
+              <p className="text-3xl font-bold text-white">5,000+</p>
+              <p className="text-gray-400">Active Listings</p>
+            </div>
+            <div className="text-center md:text-left">
+              <p className="text-3xl font-bold text-white">2,500+</p>
+              <p className="text-gray-400">Property Owners</p>
+            </div>
+            <div className="text-center md:text-left">
+              <p className="text-3xl font-bold text-white">10,000+</p>
+              <p className="text-gray-400">Happy Seekers</p>
+            </div>
+            <div className="text-center md:text-left">
+              <p className="text-3xl font-bold text-white">8</p>
+              <p className="text-gray-400">Major Cities</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Category Cards */}
+      <div className="relative bg-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-800">What are you looking for?</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <button 
+              onClick={onBrowseProperties}
+              className="group p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl hover:shadow-lg transition-all border border-blue-100"
+            >
+              <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                <Home className="w-7 h-7 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-1">Residential Rent</h3>
+              <p className="text-sm text-gray-500">Houses, Apartments, Rooms</p>
+            </button>
+
+            <button 
+              onClick={onBrowseProperties}
+              className="group p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl hover:shadow-lg transition-all border border-purple-100"
+            >
+              <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
+                <Key className="w-7 h-7 text-purple-600" />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-1">Buy Property</h3>
+              <p className="text-sm text-gray-500">Homes, Stands, Commercial</p>
+            </button>
+
+            <button 
+              onClick={onBrowseProperties}
+              className="group p-6 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl hover:shadow-lg transition-all border border-orange-100"
+            >
+              <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-colors">
+                <Briefcase className="w-7 h-7 text-orange-600" />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-1">Commercial Rent</h3>
+              <p className="text-sm text-gray-500">Offices, Shops, Warehouses</p>
+            </button>
+
+            <button 
+              onClick={isLoggedIn ? onListProperty : onLogin}
+              className="group p-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl hover:shadow-lg transition-all border border-emerald-100"
+            >
+              <div className="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center mb-4 group-hover:bg-emerald-200 transition-colors">
+                <ShoppingBag className="w-7 h-7 text-emerald-600" />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-1">List Property</h3>
+              <p className="text-sm text-gray-500">Free for Owners</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default HeroSection;
