@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, Lock, Building2, Search, Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface AuthModalProps {
   onClose: () => void;
@@ -62,12 +62,32 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
-
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    try {
+      if (mode === 'register') {
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: { data: { name: formData.name, phone: formData.phone, user_type: userType } }
+        });
+        if (error) throw error;
+        onLogin(userType);
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+        if (error) throw error;
+        onLogin(userType);
+      }
+    } catch (err: any) {
+      setErrors({ email: err.message || 'Authentication failed' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
     setIsLoading(false);
     
     onLogin(userType);
