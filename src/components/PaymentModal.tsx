@@ -64,6 +64,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const initiatePayment = async (method: PaymentMethod, phone?: string) => {
     setState(prev => ({ ...prev, step: 'processing', error: null }));
     setIsProcessing(true);
+    const resolvedPhone = phone || state.phoneNumber;
+    if (!resolvedPhone || !userEmail || !userId) {
+      setState(prev => ({ ...prev, step: 'error', error: 'Missing phone number or account details.' }));
+      setIsProcessing(false);
+      return;
+    }
 
     try {
       const reference = `REF-${userId.slice(0, 8)}-${Date.now()}`;
@@ -74,7 +80,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         body: JSON.stringify({
           reference,
           email: userEmail,
-          phone: phone || state.phoneNumber,
+          phone: resolvedPhone,
           method: method === 'web' ? 'ecocash' : method,
           items: [{ name: tier.name, amount: tier.price }]
         })
