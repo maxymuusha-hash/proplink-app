@@ -178,22 +178,22 @@ const AppLayout: React.FC = () => {
     setPriceRange({ min: 0, max: 0 });
   };
 
-  const handleLogin = (type: 'owner' | 'seeker') => {
-    const newUserId = `user-${Date.now()}`;
-    const newUserEmail = type === 'owner' ? 'owner@proplink.co.zw' : 'seeker@proplink.co.zw';
-    
+const handleLogin = async (type: 'owner' | 'seeker') => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const newUserId = user?.id || `user-${Date.now()}`;
+    const newUserEmail = user?.email || '';
+
     setUserId(newUserId);
     setUserEmail(newUserEmail);
     setUserType(type);
-    setUserName(type === 'owner' ? 'John Moyo' : 'Sarah Ncube');
+    setUserName(user?.user_metadata?.name || (type === 'owner' ? 'Property Owner' : 'Property Seeker'));
     setIsLoggedIn(true);
     setShowAuthModal(false);
-    
+
     if (type === 'owner') {
-      // Simulate owner having some properties
       setOwnerProperties(PROPERTIES.slice(0, 3).map(p => ({ ...p, ownerId: newUserId })));
     }
-    
+
     if (!disclaimerAccepted) {
       setShowDisclaimerModal(true);
     }
