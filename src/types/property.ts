@@ -2,6 +2,7 @@ export type PropertyCategory = 'residential' | 'commercial';
 export type PropertyType = 'house' | 'apartment' | 'room' | 'stand' | 'office' | 'shop' | 'warehouse' | 'industrial';
 export type TransactionType = 'rent' | 'sale';
 export type PropertyStatus = 'available' | 'leased' | 'sold';
+
 export interface Property {
   id: string;
   title: string;
@@ -28,18 +29,20 @@ export interface Property {
   createdAt: string;
   updatedAt: string;
 }
+
 export interface User {
   id: string;
   name: string;
   email: string;
   phone: string;
   userType: 'owner' | 'seeker' | 'admin';
-  subscriptionType?: 'residential_rental' | 'commercial_rental' | 'buyer' | null;
+  subscriptionType?: 'residential_rental' | 'commercial_rental' | 'seller_residential' | 'seller_commercial' | null;
   subscriptionExpiry?: string | null;
   createdAt: string;
   verified: boolean;
   disclaimerAccepted: boolean;
 }
+
 export interface SubscriptionTier {
   id: string;
   name: string;
@@ -47,13 +50,15 @@ export interface SubscriptionTier {
   currency: string;
   description: string;
   features: string[];
-  accessType: 'residential_rental' | 'commercial_rental' | 'buyer';
+  accessType: 'residential_rental' | 'commercial_rental' | 'seller_residential' | 'seller_commercial';
+  userType: 'seeker' | 'owner';
 }
+
 export const SUBSCRIPTION_TIERS: SubscriptionTier[] = [
   {
     id: 'residential_rental',
     name: 'Residential Rental',
-    price: 3,
+    price: 2,
     currency: 'USD',
     description: 'Access contact details for residential rental properties',
     features: [
@@ -62,7 +67,8 @@ export const SUBSCRIPTION_TIERS: SubscriptionTier[] = [
       'Direct WhatsApp contact',
       '30 days access'
     ],
-    accessType: 'residential_rental'
+    accessType: 'residential_rental',
+    userType: 'seeker'
   },
   {
     id: 'commercial_rental',
@@ -76,21 +82,40 @@ export const SUBSCRIPTION_TIERS: SubscriptionTier[] = [
       'Direct WhatsApp contact',
       '30 days access'
     ],
-    accessType: 'commercial_rental'
+    accessType: 'commercial_rental',
+    userType: 'seeker'
   },
   {
-    id: 'buyer',
-    name: 'Property Buyer',
-    price: 30,
+    id: 'seller_residential',
+    name: 'Property Seller - Residential',
+    price: 50,
     currency: 'USD',
-    description: 'Access contact details for all properties for sale',
+    description: 'List your residential property and connect with seekers',
     features: [
-      'View owner contact details',
-      'All residential & commercial for sale',
-      'Direct WhatsApp contact',
-      '30 days access',
-      'Priority support'
+      'List residential properties',
+      'Houses, apartments & rooms',
+      'Visible to all seekers',
+      '30 days listing'
     ],
-    accessType: 'buyer'
+    accessType: 'seller_residential',
+    userType: 'owner'
+  },
+  {
+    id: 'seller_commercial',
+    name: 'Property Seller - Commercial',
+    price: 200,
+    currency: 'USD',
+    description: 'List your commercial property and connect with seekers',
+    features: [
+      'List commercial properties',
+      'Offices, shops & warehouses',
+      'Visible to all seekers',
+      '30 days listing'
+    ],
+    accessType: 'seller_commercial',
+    userType: 'owner'
   }
 ];
+
+export const SEEKER_TIERS = SUBSCRIPTION_TIERS.filter(t => t.userType === 'seeker');
+export const OWNER_TIERS = SUBSCRIPTION_TIERS.filter(t => t.userType === 'owner');
