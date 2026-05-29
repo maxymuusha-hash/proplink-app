@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Upload, Trash2, Image } from 'lucide-react';
 import { Property, PropertyCategory, PropertyType, TransactionType, getListingTier, SubscriptionTier } from '@/types/property';
 import { CITIES } from '@/data/properties';
+import { supabase } from '@/lib/supabase';
 import PaymentModal from './PaymentModal';
 
 interface ListPropertyModalProps {
@@ -45,6 +46,9 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
   const [pendingProperty, setPendingProperty] = useState<Partial<Property> | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentTier, setPaymentTier] = useState<SubscriptionTier | null>(null);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState<string[]>(editProperty?.images || []);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: editProperty?.title || '',
@@ -89,29 +93,79 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
     if (validateStep(step)) setStep(step + 1);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (uploadedImages.length + files.length > 5) {
+      setUploadError('Maximum 5 images allowed');
+      return;
+    }
+
+    setUploadingImages(true);
+    setUploadError(null);
+    const newUrls: string[] = [];
+
+    for (const file of Array.from(files)) {
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError('Each image must be under 5MB');
+        setUploadingImages(false);
+        return;
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('property-images')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+      if (error) {
+        setUploadError(`Upload failed: ${error.message}`);
+        setUploadingImages(false);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('property-images')
+        .getPublicUrl(fileName);
+
+      newUrls.push(publicUrl);
+    }
+
+    setUploadedImages(prev => [...prev, ...newUrls]);
+    setUploadingImages(false);
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async () => {
     if (!validateStep(3)) return;
     setIsSubmitting(true);
+
+    const images = uploadedImages.length > 0
+      ? uploadedImages
+      : ['https://d64gsuwffb70l.cloudfront.net/6946db6198d16b00e323578d_1766251491901_702fd7fe.png'];
 
     const propertyData: Partial<Property> = {
       ...formData,
       price: Number(formData.price),
       bedrooms: formData.bedrooms ? Number(formData.bedrooms) : undefined,
       bathrooms: formData.bathrooms ? Number(formData.bathrooms) : undefined,
-      size: formData.size ? Number(formData.size) : undefined
+      size: formData.size ? Number(formData.size) : undefined,
+      images
     };
 
-    // Check if listing requires payment
     const tier = getListingTier(formData.category, formData.transactionType);
 
     if (tier) {
-      // Requires payment — show payment modal
       setPendingProperty(propertyData);
       setPaymentTier(tier);
       setShowPayment(true);
       setIsSubmitting(false);
     } else {
-      // Free listing (residential for rent) — submit directly
       await new Promise(resolve => setTimeout(resolve, 1500));
       onSubmit(propertyData);
       setIsSubmitting(false);
@@ -134,7 +188,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
     }));
   };
 
-  // Show payment modal
   if (showPayment && paymentTier) {
     return (
       <PaymentModal
@@ -150,7 +203,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
     );
   }
 
-  // Listing fee notice for step 1
   const listingFee = getListingTier(formData.category, formData.transactionType);
 
   return (
@@ -160,9 +212,7 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
         <div className="p-6 border-b bg-gradient-to-r from-cyan-600 to-blue-600 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold">
-                {editProperty ? 'Edit Property' : 'List Your Property'}
-              </h2>
+              <h2 className="text-2xl font-bold">{editProperty ? 'Edit Property' : 'List Your Property'}</h2>
               <p className="text-cyan-100 mt-1">Step {step} of 3</p>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
@@ -209,11 +259,9 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
               {/* Property Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Property Type</label>
-                <select
-                  value={formData.type}
+                <select value={formData.type}
                   onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as PropertyType }))}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                >
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
                   {PROPERTY_TYPES_BY_CATEGORY[formData.category].map((type) => (
                     <option key={type.value} value={type.value}>{type.label}</option>
                   ))}
@@ -285,7 +333,65 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
 
           {step === 2 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Property Features</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Property Features & Photos</h3>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Property Photos ({uploadedImages.length}/5)
+                </label>
+
+                {/* Uploaded Images Preview */}
+                {uploadedImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {uploadedImages.map((url, index) => (
+                      <div key={index} className="relative rounded-lg overflow-hidden h-24">
+                        <img src={url} alt={`Property ${index + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                        {index === 0 && (
+                          <span className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-1.5 py-0.5 rounded">
+                            Main
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload Button */}
+                {uploadedImages.length < 5 && (
+                  <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${uploadingImages ? 'border-cyan-300 bg-cyan-50' : 'border-gray-300 hover:border-cyan-400 hover:bg-cyan-50'}`}>
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      {uploadingImages ? (
+                        <>
+                          <div className="w-8 h-8 border-2 border-cyan-600 border-t-transparent rounded-full animate-spin mb-2" />
+                          <p className="text-sm text-cyan-600">Uploading...</p>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                          <p className="text-sm text-gray-600"><span className="font-medium text-cyan-600">Click to upload</span> photos</p>
+                          <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB each (max 5 photos)</p>
+                        </>
+                      )}
+                    </div>
+                    <input type="file" className="hidden" multiple accept="image/*"
+                      onChange={handleImageUpload} disabled={uploadingImages} />
+                  </label>
+                )}
+
+                {uploadError && <p className="text-red-500 text-sm mt-1">{uploadError}</p>}
+                {uploadedImages.length === 0 && (
+                  <p className="text-xs text-gray-400 mt-1">If no photos uploaded, a placeholder image will be used</p>
+                )}
+              </div>
+
+              {/* Size and Rooms */}
               <div className="grid grid-cols-3 gap-4">
                 {(formData.category === 'residential' && formData.type !== 'stand') && (
                   <>
@@ -314,6 +420,7 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                 </div>
               </div>
 
+              {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea value={formData.description}
@@ -324,6 +431,7 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                 {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
               </div>
 
+              {/* Amenities */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Amenities</label>
                 <div className="flex flex-wrap gap-2">
@@ -380,10 +488,10 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   <p><strong>Type:</strong> {formData.category} - {formData.type}</p>
                   <p><strong>Price:</strong> ${formData.price}{formData.transactionType === 'rent' ? '/month' : ''}</p>
                   <p><strong>Location:</strong> {formData.location}, {formData.city}</p>
+                  <p><strong>Photos:</strong> {uploadedImages.length} uploaded</p>
                 </div>
               </div>
 
-              {/* Payment notice */}
               {listingFee && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
                   <p className="text-sm font-semibold text-amber-800">💳 Listing Fee Required</p>
@@ -417,7 +525,7 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
               Continue
             </button>
           ) : (
-            <button onClick={handleSubmit} disabled={isSubmitting}
+            <button onClick={handleSubmit} disabled={isSubmitting || uploadingImages}
               className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-lg font-semibold hover:from-cyan-700 hover:to-blue-700 transition-all disabled:opacity-50">
               {isSubmitting ? 'Processing...' : listingFee ? `Publish & Pay $${listingFee.price}` : 'Publish Listing (Free)'}
             </button>
