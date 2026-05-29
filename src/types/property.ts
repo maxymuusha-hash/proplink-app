@@ -133,3 +133,4 @@ export const getListingTier = (category: PropertyCategory, transactionType: Tran
   if (category === 'commercial' && transactionType === 'sale') return SUBSCRIPTION_TIERS.find(t => t.id === 'commercial_sale') || null;
   return null;
 };
+
