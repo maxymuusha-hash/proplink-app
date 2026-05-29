@@ -96,7 +96,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           instructions: data.instructions || null,
         }));
 
-        // Start polling for payment status
         pollPaymentStatus(data.pollUrl, reference);
       } else {
         throw new Error(data.error || 'Payment initiation failed');
@@ -115,7 +114,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const pollPaymentStatus = async (pollUrl: string, reference: string) => {
     let attempts = 0;
-    const maxAttempts = 60; // 5 minutes with 5-second intervals
+    const maxAttempts = 60;
 
     const checkStatus = async () => {
       try {
@@ -201,17 +200,13 @@ For support: info@proplink.co.zw
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden">
-        {/* Header */}
         <div className="p-6 border-b bg-gradient-to-r from-cyan-600 to-blue-600 text-white">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold">Complete Payment</h2>
               <p className="text-cyan-100 text-sm mt-1">{tier.name} - ${tier.price}/month</p>
             </div>
-            <button 
-              onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
-            >
+            <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -234,7 +229,6 @@ For support: info@proplink.co.zw
                   </button>
                 ))}
               </div>
-
               <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Shield className="w-4 h-4 text-green-600" />
@@ -251,7 +245,6 @@ For support: info@proplink.co.zw
               <p className="text-gray-600 text-sm mb-4">
                 Enter your {state.method === 'ecocash' ? 'EcoCash' : state.method === 'onemoney' ? 'OneMoney' : 'InnBucks'} registered phone number
               </p>
-              
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                 <div className="relative">
@@ -265,7 +258,6 @@ For support: info@proplink.co.zw
                   />
                 </div>
               </div>
-
               <div className="flex gap-3">
                 <button
                   onClick={() => setState(prev => ({ ...prev, step: 'method', method: null }))}
@@ -291,10 +283,13 @@ For support: info@proplink.co.zw
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
                 {isProcessing ? 'Processing Payment...' : 'Waiting for Payment'}
               </h3>
-              {state.instructions && (
+              {state.method && state.method !== 'web' && (
                 <div className="mt-4 p-4 bg-green-50 rounded-xl text-left">
                   <p className="text-sm font-medium text-green-800 mb-1">Payment Instructions:</p>
-                  <p className="text-sm text-green-700">{state.instructions}</p>
+                  <p className="text-sm text-green-700">
+                    Check your phone for an EcoCash payment request and enter your PIN to authorize.
+                    Once done, wait — your subscription will activate automatically.
+                  </p>
                 </div>
               )}
               {state.reference && (
@@ -313,7 +308,6 @@ For support: info@proplink.co.zw
               <p className="text-gray-600 mb-6">
                 Your {tier.name} subscription is now active for 30 days.
               </p>
-
               {state.receiptNumber && (
                 <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left">
                   <div className="flex items-center gap-2 mb-2">
@@ -328,7 +322,6 @@ For support: info@proplink.co.zw
                   </div>
                 </div>
               )}
-
               <div className="flex gap-3">
                 <button
                   onClick={generateReceipt}
