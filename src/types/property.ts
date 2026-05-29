@@ -36,7 +36,7 @@ export interface User {
   email: string;
   phone: string;
   userType: 'owner' | 'seeker' | 'admin';
-  subscriptionType?: 'residential_rental' | 'commercial_rental' | 'seller_residential' | 'seller_commercial' | null;
+  subscriptionType?: 'residential_rental' | 'residential_sale' | 'commercial_rent' | 'commercial_sale' | null;
   subscriptionExpiry?: string | null;
   createdAt: string;
   verified: boolean;
@@ -50,8 +50,9 @@ export interface SubscriptionTier {
   currency: string;
   description: string;
   features: string[];
-  accessType: 'residential_rental' | 'commercial_rental' | 'seller_residential' | 'seller_commercial';
+  accessType: 'residential_rental' | 'residential_sale' | 'commercial_rent' | 'commercial_sale';
   userType: 'seeker' | 'owner';
+  billingType: 'monthly' | 'one-time';
 }
 
 export const SUBSCRIPTION_TIERS: SubscriptionTier[] = [
@@ -68,54 +69,67 @@ export const SUBSCRIPTION_TIERS: SubscriptionTier[] = [
       '30 days access'
     ],
     accessType: 'residential_rental',
-    userType: 'seeker'
+    userType: 'seeker',
+    billingType: 'monthly'
   },
   {
-    id: 'commercial_rental',
-    name: 'Commercial Rental',
+    id: 'commercial_rent',
+    name: 'Commercial Rental Listing',
     price: 10,
     currency: 'USD',
-    description: 'Access contact details for commercial rental properties',
+    description: 'List your commercial property for rent',
     features: [
-      'View owner contact details',
-      'Offices, shops & warehouses for rent',
-      'Direct WhatsApp contact',
-      '30 days access'
-    ],
-    accessType: 'commercial_rental',
-    userType: 'seeker'
-  },
-  {
-    id: 'seller_residential',
-    name: 'Property Seller - Residential',
-    price: 50,
-    currency: 'USD',
-    description: 'List your residential property and connect with seekers',
-    features: [
-      'List residential properties',
-      'Houses, apartments & rooms',
-      'Visible to all seekers',
-      '30 days listing'
-    ],
-    accessType: 'seller_residential',
-    userType: 'owner'
-  },
-  {
-    id: 'seller_commercial',
-    name: 'Property Seller - Commercial',
-    price: 200,
-    currency: 'USD',
-    description: 'List your commercial property and connect with seekers',
-    features: [
-      'List commercial properties',
+      'List one commercial property for rent',
       'Offices, shops & warehouses',
       'Visible to all seekers',
-      '30 days listing'
+      'One-time fee per listing'
     ],
-    accessType: 'seller_commercial',
-    userType: 'owner'
+    accessType: 'commercial_rent',
+    userType: 'owner',
+    billingType: 'one-time'
+  },
+  {
+    id: 'residential_sale',
+    name: 'Residential Sale Listing',
+    price: 200,
+    currency: 'USD',
+    description: 'List your residential property for sale',
+    features: [
+      'List one residential property for sale',
+      'Houses, apartments & stands',
+      'Visible to all seekers',
+      'One-time fee per listing'
+    ],
+    accessType: 'residential_sale',
+    userType: 'owner',
+    billingType: 'one-time'
+  },
+  {
+    id: 'commercial_sale',
+    name: 'Commercial Sale Listing',
+    price: 1000,
+    currency: 'USD',
+    description: 'List your commercial property for sale',
+    features: [
+      'List one commercial property for sale',
+      'Offices, shops & warehouses',
+      'Visible to all seekers',
+      'One-time fee per listing'
+    ],
+    accessType: 'commercial_sale',
+    userType: 'owner',
+    billingType: 'one-time'
   }
 ];
 
 export const SEEKER_TIERS = SUBSCRIPTION_TIERS.filter(t => t.userType === 'seeker');
 export const OWNER_TIERS = SUBSCRIPTION_TIERS.filter(t => t.userType === 'owner');
+
+// Returns the correct listing tier based on property details, or null if free
+export const getListingTier = (category: PropertyCategory, transactionType: TransactionType): SubscriptionTier | null => {
+  if (category === 'residential' && transactionType === 'rent') return null; // FREE
+  if (category === 'residential' && transactionType === 'sale') return SUBSCRIPTION_TIERS.find(t => t.id === 'residential_sale') || null;
+  if (category === 'commercial' && transactionType === 'rent') return SUBSCRIPTION_TIERS.find(t => t.id === 'commercial_rent') || null;
+  if (category === 'commercial' && transactionType === 'sale') return SUBSCRIPTION_TIERS.find(t => t.id === 'commercial_sale') || null;
+  return null;
+};
