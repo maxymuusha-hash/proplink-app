@@ -23,7 +23,6 @@ interface SubscriptionAccess {
 }
 
 const AppLayout: React.FC = () => {
-  // User state
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
@@ -36,12 +35,8 @@ const AppLayout: React.FC = () => {
     forSale: false
   });
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
-
-  // View state
   const [currentView, setCurrentView] = useState('home');
   const [showHero, setShowHero] = useState(true);
-
-  // Modal state
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
@@ -49,8 +44,6 @@ const AppLayout: React.FC = () => {
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-
-  // Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
@@ -58,27 +51,21 @@ const AppLayout: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState('All Cities');
   const [priceRange, setPriceRange] = useState({ min: 0, max: 0 });
   const [showFilters, setShowFilters] = useState(false);
-
-  // Properties state
   const [properties, setProperties] = useState<Property[]>(PROPERTIES);
   const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
 
-  // Check subscription status
   const checkSubscriptionStatus = useCallback(async () => {
     if (!userId) return;
-
     try {
       const { data, error } = await supabase.functions.invoke('check-subscription', {
         body: { userId }
       });
-
       if (!error && data) {
         setSubscriptionAccess(data.access || {
           residentialRental: false,
           commercialRental: false,
           forSale: false
         });
-
         if (data.accessTypes && data.accessTypes.length > 0) {
           setSubscriptionType(data.accessTypes[0]);
         }
@@ -108,13 +95,8 @@ const AppLayout: React.FC = () => {
 
   const filteredProperties = useMemo(() => {
     let filtered = properties;
-
-    if (currentView === 'residential') {
-      filtered = filtered.filter(p => p.category === 'residential');
-    } else if (currentView === 'commercial') {
-      filtered = filtered.filter(p => p.category === 'commercial');
-    }
-
+    if (currentView === 'residential') filtered = filtered.filter(p => p.category === 'residential');
+    else if (currentView === 'commercial') filtered = filtered.filter(p => p.category === 'commercial');
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(p =>
@@ -123,27 +105,11 @@ const AppLayout: React.FC = () => {
         p.description.toLowerCase().includes(query)
       );
     }
-
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(p => p.category === selectedCategory);
-    }
-
-    if (selectedType !== 'all') {
-      filtered = filtered.filter(p => p.type === selectedType);
-    }
-
-    if (selectedTransaction !== 'all') {
-      filtered = filtered.filter(p => p.transactionType === selectedTransaction);
-    }
-
-    if (selectedCity !== 'All Cities') {
-      filtered = filtered.filter(p => p.city === selectedCity);
-    }
-
-    if (priceRange.max > 0) {
-      filtered = filtered.filter(p => p.price <= priceRange.max);
-    }
-
+    if (selectedCategory !== 'all') filtered = filtered.filter(p => p.category === selectedCategory);
+    if (selectedType !== 'all') filtered = filtered.filter(p => p.type === selectedType);
+    if (selectedTransaction !== 'all') filtered = filtered.filter(p => p.transactionType === selectedTransaction);
+    if (selectedCity !== 'All Cities') filtered = filtered.filter(p => p.city === selectedCity);
+    if (priceRange.max > 0) filtered = filtered.filter(p => p.price <= priceRange.max);
     return filtered;
   }, [properties, currentView, searchQuery, selectedCategory, selectedType, selectedTransaction, selectedCity, priceRange]);
 
@@ -170,7 +136,6 @@ const AppLayout: React.FC = () => {
     const { data: { user } } = await supabase.auth.getUser();
     const newUserId = user?.id || `user-${Date.now()}`;
     const newUserEmail = user?.email || '';
-
     setUserId(newUserId);
     setUserEmail(newUserEmail);
     setUserType(type);
@@ -182,11 +147,9 @@ const AppLayout: React.FC = () => {
     );
     setIsLoggedIn(true);
     setShowAuthModal(false);
-
     if (type === 'owner') {
       setOwnerProperties(PROPERTIES.slice(0, 3).map(p => ({ ...p, ownerId: newUserId })));
     }
-
     if (!disclaimerAccepted) {
       setShowDisclaimerModal(true);
     }
@@ -199,42 +162,31 @@ const AppLayout: React.FC = () => {
     setUserType(null);
     setUserName('');
     setSubscriptionType(null);
-    setSubscriptionAccess({
-      residentialRental: false,
-      commercialRental: false,
-      forSale: false
-    });
+    setSubscriptionAccess({ residentialRental: false, commercialRental: false, forSale: false });
     setOwnerProperties([]);
     setCurrentView('home');
   };
 
   const handleSubscribe = (tier: SubscriptionTier, subscription: any) => {
     setSubscriptionType(tier.accessType);
-
     const newAccess = { ...subscriptionAccess };
     if (tier.accessType === 'residential_rental') {
       newAccess.residentialRental = true;
     } else if (tier.accessType === 'commercial_rental') {
       newAccess.commercialRental = true;
-    } else if (tier.accessType === 'buyer') {
-      newAccess.forSale = true;
-      newAccess.residentialRental = true;
-      newAccess.commercialRental = true;
+    } else if (tier.accessType === 'seller_residential' || tier.accessType === 'seller_commercial') {
+      // Owner listing access — no contact view changes needed
     }
     setSubscriptionAccess(newAccess);
-
     setShowSubscriptionModal(false);
   };
 
   const canViewContact = (property: Property): boolean => {
-    if (property.transactionType === 'sale') {
-      return subscriptionAccess.forSale;
-    }
     if (property.category === 'residential') {
-      return subscriptionAccess.residentialRental || subscriptionAccess.forSale;
+      return subscriptionAccess.residentialRental;
     }
     if (property.category === 'commercial') {
-      return subscriptionAccess.commercialRental || subscriptionAccess.forSale;
+      return subscriptionAccess.commercialRental;
     }
     return false;
   };
@@ -266,7 +218,6 @@ const AppLayout: React.FC = () => {
       createdAt: new Date().toISOString().split('T')[0],
       updatedAt: new Date().toISOString().split('T')[0]
     };
-
     setOwnerProperties(prev => [newProperty, ...prev]);
     setProperties(prev => [newProperty, ...prev]);
     setShowListPropertyModal(false);
@@ -324,7 +275,6 @@ const AppLayout: React.FC = () => {
             setShowHero(view === 'home');
           }}
         />
-
         <OwnerDashboard
           properties={ownerProperties}
           onAddProperty={() => setShowListPropertyModal(true)}
@@ -335,9 +285,17 @@ const AppLayout: React.FC = () => {
           onUpdateStatus={handleUpdatePropertyStatus}
           onDeleteProperty={handleDeleteProperty}
         />
-
         <Footer onShowDisclaimer={() => setShowDisclaimerModal(true)} />
-
+        {showSubscriptionModal && (
+          <SubscriptionModal
+            onClose={() => setShowSubscriptionModal(false)}
+            onSubscribe={handleSubscribe}
+            currentSubscription={subscriptionType}
+            userId={userId}
+            userEmail={userEmail}
+            userType={userType}
+          />
+        )}
         {showListPropertyModal && (
           <ListPropertyModal
             onClose={() => {
@@ -396,11 +354,8 @@ const AppLayout: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800">{getViewTitle()}</h2>
-            <p className="text-gray-500 mt-1">
-              {filteredProperties.length} properties found
-            </p>
+            <p className="text-gray-500 mt-1">{filteredProperties.length} properties found</p>
           </div>
-
           {isLoggedIn && userType === 'seeker' && !subscriptionType && (
             <button
               onClick={() => setShowSubscriptionModal(true)}
@@ -414,32 +369,17 @@ const AppLayout: React.FC = () => {
 
         {!showHero && (
           <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
-            <button
-              onClick={() => setCurrentView('home')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                currentView === 'home' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border'
-              }`}
-            >
-              <Building2 className="w-4 h-4" />
-              All Properties
+            <button onClick={() => setCurrentView('home')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${currentView === 'home' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border'}`}>
+              <Building2 className="w-4 h-4" />All Properties
             </button>
-            <button
-              onClick={() => setCurrentView('residential')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                currentView === 'residential' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border'
-              }`}
-            >
-              <Home className="w-4 h-4" />
-              Residential
+            <button onClick={() => setCurrentView('residential')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${currentView === 'residential' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border'}`}>
+              <Home className="w-4 h-4" />Residential
             </button>
-            <button
-              onClick={() => setCurrentView('commercial')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                currentView === 'commercial' ? 'bg-orange-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border'
-              }`}
-            >
-              <Briefcase className="w-4 h-4" />
-              Commercial
+            <button onClick={() => setCurrentView('commercial')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${currentView === 'commercial' ? 'bg-orange-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border'}`}>
+              <Briefcase className="w-4 h-4" />Commercial
             </button>
           </div>
         )}
@@ -466,11 +406,7 @@ const AppLayout: React.FC = () => {
         {filteredProperties.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProperties.map((property) => (
-              <PropertyCard
-                key={property.id}
-                property={property}
-                onClick={setSelectedProperty}
-              />
+              <PropertyCard key={property.id} property={property} onClick={setSelectedProperty} />
             ))}
           </div>
         ) : (
@@ -478,10 +414,7 @@ const AppLayout: React.FC = () => {
             <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No Properties Found</h3>
             <p className="text-gray-500 mb-6">Try adjusting your filters or search criteria</p>
-            <button
-              onClick={clearFilters}
-              className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition-colors"
-            >
+            <button onClick={clearFilters} className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition-colors">
               Clear All Filters
             </button>
           </div>
@@ -495,15 +428,14 @@ const AppLayout: React.FC = () => {
                 Subscribe to access property owner contact details and connect directly with landlords and sellers.
               </p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
                 <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
                   <Home className="w-6 h-6 text-blue-400" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Residential Rental</h3>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-white">$3</span>
+                  <span className="text-4xl font-bold text-white">$2</span>
                   <span className="text-gray-400">/month</span>
                 </div>
                 <ul className="space-y-2 mb-6">
@@ -529,24 +461,6 @@ const AppLayout: React.FC = () => {
                   <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-cyan-400" />30 days access</li>
                 </ul>
                 <button onClick={() => setShowAuthModal(true)} className="w-full py-3 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors">Get Started</button>
-              </div>
-
-              <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl p-6 border border-amber-400/30 relative">
-                <div className="absolute -top-3 right-4 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">Best Value</div>
-                <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mb-4">
-                  <Crown className="w-6 h-6 text-amber-400" />
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2">Property Buyer</h3>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold text-white">$30</span>
-                  <span className="text-gray-400">/month</span>
-                </div>
-                <ul className="space-y-2 mb-6">
-                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-amber-400" />All properties for sale</li>
-                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-amber-400" />Direct owner contact</li>
-                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-amber-400" />Priority support</li>
-                </ul>
-                <button onClick={() => setShowAuthModal(true)} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all">Get Started</button>
               </div>
             </div>
           </section>
@@ -586,10 +500,7 @@ const AppLayout: React.FC = () => {
       <Footer onShowDisclaimer={() => setShowDisclaimerModal(true)} />
 
       {showAuthModal && (
-        <AuthModal
-          onClose={() => setShowAuthModal(false)}
-          onLogin={handleLogin}
-        />
+        <AuthModal onClose={() => setShowAuthModal(false)} onLogin={handleLogin} />
       )}
 
       {showSubscriptionModal && (
@@ -599,6 +510,7 @@ const AppLayout: React.FC = () => {
           currentSubscription={subscriptionType}
           userId={userId}
           userEmail={userEmail}
+          userType={userType}
         />
       )}
 
