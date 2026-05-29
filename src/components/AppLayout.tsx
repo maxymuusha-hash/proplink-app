@@ -22,7 +22,6 @@ interface SubscriptionAccess {
   forSale: boolean;
 }
 
-// Convert Supabase row to Property type
 const rowToProperty = (row: any): Property => ({
   id: row.id,
   title: row.title,
@@ -81,9 +80,8 @@ const AppLayout: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [properties, setProperties] = useState<Property[]>(PROPERTIES);
   const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
-  const [loadingProperties, setLoadingProperties] = useState(true);
+  const [loadingProperties, setLoadingProperties] = useState(false);
 
-  // Load properties from Supabase on mount
   const loadProperties = useCallback(async () => {
     setLoadingProperties(true);
     try {
@@ -95,7 +93,6 @@ const AppLayout: React.FC = () => {
       if (!error && data && data.length > 0) {
         setProperties(data.map(rowToProperty));
       } else {
-        // Fall back to hardcoded properties if no data
         setProperties(PROPERTIES);
       }
     } catch (err) {
@@ -110,7 +107,6 @@ const AppLayout: React.FC = () => {
     loadProperties();
   }, [loadProperties]);
 
-  // Load owner properties when logged in as owner
   const loadOwnerProperties = useCallback(async (ownerId: string) => {
     try {
       const { data, error } = await supabase
