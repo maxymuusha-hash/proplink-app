@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Property, SubscriptionTier } from '@/types/property';
-import { PROPERTIES } from '@/data/properties';
 import { supabase } from '@/lib/supabase';
 import Header from './Header';
 import Footer from './Footer';
@@ -78,7 +77,7 @@ const AppLayout: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState('All Cities');
   const [priceRange, setPriceRange] = useState({ min: 0, max: 0 });
   const [showFilters, setShowFilters] = useState(false);
-  const [properties, setProperties] = useState<Property[]>(PROPERTIES);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
   const [loadingProperties, setLoadingProperties] = useState(false);
 
@@ -90,14 +89,14 @@ const AppLayout: React.FC = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         setProperties(data.map(rowToProperty));
       } else {
-        setProperties(PROPERTIES);
+        setProperties([]);
       }
     } catch (err) {
       console.error('Error loading properties:', err);
-      setProperties(PROPERTIES);
+      setProperties([]);
     } finally {
       setLoadingProperties(false);
     }
@@ -506,10 +505,10 @@ const AppLayout: React.FC = () => {
         ) : (
           <div className="bg-white rounded-xl p-12 text-center">
             <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Properties Found</h3>
-            <p className="text-gray-500 mb-6">Try adjusting your filters or search criteria</p>
-            <button onClick={clearFilters} className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition-colors">
-              Clear All Filters
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Properties Yet</h3>
+            <p className="text-gray-500 mb-6">Be the first to list a property on PropLink</p>
+            <button onClick={() => setShowAuthModal(true)} className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition-colors">
+              List Your Property
             </button>
           </div>
         )}
@@ -570,7 +569,7 @@ const AppLayout: React.FC = () => {
                 <span className="text-2xl font-bold text-cyan-600">1</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Browse Properties</h3>
-              <p className="text-gray-500">Search through thousands of residential and commercial properties across Zimbabwe</p>
+              <p className="text-gray-500">Search through residential and commercial properties across Zimbabwe</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-cyan-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
