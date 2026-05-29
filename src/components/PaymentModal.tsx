@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, CreditCard, Smartphone, Shield, Check, AlertCircle, Loader2, Receipt, Download } from 'lucide-react';
-import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/types/property';
+import { X, Smartphone, Shield, Check, AlertCircle, Loader2, Receipt, Download } from 'lucide-react';
+import { SubscriptionTier } from '@/types/property';
 
 const PAYNOW_SERVER = 'https://paynow-integration.onrender.com';
 
@@ -25,13 +25,7 @@ interface PaymentState {
   instructions: string | null;
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({
-  tier,
-  userId,
-  userEmail,
-  onClose,
-  onSuccess
-}) => {
+const PaymentModal: React.FC<PaymentModalProps> = ({ tier, userId, userEmail, onClose, onSuccess }) => {
   const [state, setState] = useState<PaymentState>({
     step: 'method',
     method: null,
@@ -70,10 +64,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       setIsProcessing(false);
       return;
     }
-
     try {
       const reference = `REF-${userId.slice(0, 8)}-${Date.now()}`;
-
       const response = await fetch(`${PAYNOW_SERVER}/pay`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,28 +77,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           items: [{ name: tier.name, amount: tier.price }]
         })
       });
-
       const data = await response.json();
-
       if (data.success) {
-        setState(prev => ({
-          ...prev,
-          pollUrl: data.pollUrl,
-          reference,
-          instructions: data.instructions || null,
-        }));
-
+        setState(prev => ({ ...prev, pollUrl: data.pollUrl, reference, instructions: data.instructions || null }));
         pollPaymentStatus(data.pollUrl, reference);
       } else {
         throw new Error(data.error || 'Payment initiation failed');
       }
     } catch (err: any) {
-      console.error('Payment error:', err);
-      setState(prev => ({
-        ...prev,
-        step: 'error',
-        error: err.message || 'Failed to initiate payment'
-      }));
+      setState(prev => ({ ...prev, step: 'error', error: err.message || 'Failed to initiate payment' }));
     } finally {
       setIsProcessing(false);
     }
@@ -121,38 +100,28 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         const response = await fetch(`${PAYNOW_SERVER}/status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pollUrl })
+          body: JSON.stringify({
+            pollUrl,
+            userId,
+            reference,
+            subscriptionType: tier.id
+          })
         });
-
         const data = await response.json();
-
         if (data.paid) {
           const receiptNumber = `REC-${Date.now()}`;
-          setState(prev => ({
-            ...prev,
-            step: 'success',
-            receiptNumber
-          }));
+          setState(prev => ({ ...prev, step: 'success', receiptNumber }));
           onSuccess({ reference, receiptNumber, tier });
           return;
         } else if (data.status === 'Failed' || data.status === 'Cancelled') {
-          setState(prev => ({
-            ...prev,
-            step: 'error',
-            error: `Payment ${data.status}. Please try again.`
-          }));
+          setState(prev => ({ ...prev, step: 'error', error: `Payment ${data.status}. Please try again.` }));
           return;
         }
-
         attempts++;
         if (attempts < maxAttempts) {
           setTimeout(checkStatus, 5000);
         } else {
-          setState(prev => ({
-            ...prev,
-            step: 'error',
-            error: 'Payment timeout. Please check your payment status and try again.'
-          }));
+          setState(prev => ({ ...prev, step: 'error', error: 'Payment timeout. Please check your payment status and try again.' }));
         }
       } catch (err) {
         console.error('Status check error:', err);
@@ -187,7 +156,6 @@ Your subscription is now active.
 For support: info@proplink.co.zw
 =============================
     `.trim();
-
     const blob = new Blob([receiptContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -213,7 +181,6 @@ For support: info@proplink.co.zw
         </div>
 
         <div className="p-6">
-          {/* Method Selection */}
           {state.step === 'method' && (
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Payment Method</h3>
@@ -238,7 +205,6 @@ For support: info@proplink.co.zw
             </div>
           )}
 
-          {/* Phone Number Input */}
           {state.step === 'phone' && (
             <div>
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Enter Phone Number</h3>
@@ -276,7 +242,6 @@ For support: info@proplink.co.zw
             </div>
           )}
 
-          {/* Processing */}
           {state.step === 'processing' && (
             <div className="text-center py-8">
               <Loader2 className="w-16 h-16 text-cyan-600 animate-spin mx-auto mb-4" />
@@ -287,8 +252,7 @@ For support: info@proplink.co.zw
                 <div className="mt-4 p-4 bg-green-50 rounded-xl text-left">
                   <p className="text-sm font-medium text-green-800 mb-1">Payment Instructions:</p>
                   <p className="text-sm text-green-700">
-                    Check your phone for an EcoCash payment request and enter your PIN to authorize.
-                    Once done, wait — your subscription will activate automatically.
+                    Check your phone for an EcoCash payment request and enter your PIN to authorize. Once done, wait — your subscription will activate automatically.
                   </p>
                 </div>
               )}
@@ -298,16 +262,13 @@ For support: info@proplink.co.zw
             </div>
           )}
 
-          {/* Success */}
           {state.step === 'success' && (
             <div className="text-center py-8">
               <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Check className="w-10 h-10 text-emerald-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">Payment Successful!</h3>
-              <p className="text-gray-600 mb-6">
-                Your {tier.name} subscription is now active for 30 days.
-              </p>
+              <p className="text-gray-600 mb-6">Your {tier.name} subscription is now active for 30 days.</p>
               {state.receiptNumber && (
                 <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left">
                   <div className="flex items-center gap-2 mb-2">
@@ -340,7 +301,6 @@ For support: info@proplink.co.zw
             </div>
           )}
 
-          {/* Error */}
           {state.step === 'error' && (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
