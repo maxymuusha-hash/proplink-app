@@ -2,7 +2,6 @@ export type PropertyCategory = 'residential' | 'commercial';
 export type PropertyType = 'house' | 'apartment' | 'room' | 'stand' | 'office' | 'shop' | 'warehouse' | 'industrial';
 export type TransactionType = 'rent' | 'sale';
 export type PropertyStatus = 'available' | 'leased' | 'sold';
-
 export interface Property {
   id: string;
   title: string;
@@ -29,7 +28,6 @@ export interface Property {
   createdAt: string;
   updatedAt: string;
 }
-
 export interface User {
   id: string;
   name: string;
@@ -42,7 +40,6 @@ export interface User {
   verified: boolean;
   disclaimerAccepted: boolean;
 }
-
 export interface SubscriptionTier {
   id: string;
   name: string;
@@ -52,7 +49,6 @@ export interface SubscriptionTier {
   features: string[];
   accessType: 'residential_rental' | 'commercial_rental' | 'buyer';
 }
-
 export const SUBSCRIPTION_TIERS: SubscriptionTier[] = [
   {
     id: 'residential_rental',
