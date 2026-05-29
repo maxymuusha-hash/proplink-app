@@ -34,7 +34,6 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   const [activeSubscriptions, setActiveSubscriptions] = useState<ActiveSubscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Show correct tiers based on user type
   const tiers = userType === 'owner' ? OWNER_TIERS : SEEKER_TIERS;
 
   useEffect(() => {
@@ -48,12 +47,14 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('check-subscription', {
-        body: { userId }
-      });
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'paid');
 
-      if (!error && data.subscriptions) {
-        setActiveSubscriptions(data.subscriptions);
+      if (!error && data) {
+        setActiveSubscriptions(data);
       }
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
@@ -134,7 +135,6 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl max-w-4xl w-full my-8">
-        {/* Header */}
         <div className="p-6 border-b flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
@@ -145,7 +145,6 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
           </button>
         </div>
 
-        {/* Active Subscriptions Banner */}
         {activeSubscriptions.length > 0 && (
           <div className="mx-6 mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
             <div className="flex items-start gap-3">
@@ -168,7 +167,6 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
           </div>
         )}
 
-        {/* Subscription Tiers */}
         <div className="p-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
