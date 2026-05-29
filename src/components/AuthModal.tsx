@@ -52,7 +52,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
         const { error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
-          options: { data: { name: formData.name, phone: formData.phone, user_type: userType } }
+          options: { data: { full_name: formData.name, phone: formData.phone, user_type: userType } }
         });
         if (error) throw error;
       } else {
