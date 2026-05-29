@@ -174,8 +174,6 @@ const AppLayout: React.FC = () => {
       newAccess.residentialRental = true;
     } else if (tier.accessType === 'commercial_rental') {
       newAccess.commercialRental = true;
-    } else if (tier.accessType === 'seller_residential' || tier.accessType === 'seller_commercial') {
-      // Owner listing access — no contact view changes needed
     }
     setSubscriptionAccess(newAccess);
     setShowSubscriptionModal(false);
@@ -304,6 +302,8 @@ const AppLayout: React.FC = () => {
             }}
             onSubmit={handleListProperty}
             editProperty={editingProperty}
+            userId={userId}
+            userEmail={userEmail}
           />
         )}
       </div>
@@ -447,18 +447,17 @@ const AppLayout: React.FC = () => {
               </div>
 
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center mb-4">
-                  <Briefcase className="w-6 h-6 text-orange-400" />
+                <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-4">
+                  <Briefcase className="w-6 h-6 text-green-400" />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Commercial Rental</h3>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-white">$10</span>
-                  <span className="text-gray-400">/month</span>
+                  <span className="text-4xl font-bold text-white">FREE</span>
                 </div>
                 <ul className="space-y-2 mb-6">
-                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-cyan-400" />Offices, Shops, Warehouses</li>
-                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-cyan-400" />Direct owner contact</li>
-                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-cyan-400" />30 days access</li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-green-400" />Offices, Shops, Warehouses</li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-green-400" />Direct owner contact</li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-green-400" />No subscription needed</li>
                 </ul>
                 <button onClick={() => setShowAuthModal(true)} className="w-full py-3 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors">Get Started</button>
               </div>
@@ -531,6 +530,8 @@ const AppLayout: React.FC = () => {
           }}
           onSubmit={handleListProperty}
           editProperty={editingProperty}
+          userId={userId}
+          userEmail={userEmail}
         />
       )}
 
