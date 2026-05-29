@@ -22,6 +22,34 @@ interface SubscriptionAccess {
   forSale: boolean;
 }
 
+// Convert Supabase row to Property type
+const rowToProperty = (row: any): Property => ({
+  id: row.id,
+  title: row.title,
+  category: row.category,
+  type: row.type,
+  transactionType: row.transaction_type,
+  price: row.price,
+  currency: row.currency || 'USD',
+  location: row.location,
+  city: row.city,
+  description: row.description || '',
+  amenities: row.amenities || [],
+  images: row.images || [],
+  bedrooms: row.bedrooms,
+  bathrooms: row.bathrooms,
+  size: row.size,
+  sizeUnit: row.size_unit || 'sqm',
+  status: row.status,
+  ownerId: row.owner_id,
+  ownerName: row.owner_name || '',
+  ownerPhone: row.owner_phone || '',
+  ownerEmail: row.owner_email || '',
+  ownerWhatsApp: row.owner_whatsapp,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
 const AppLayout: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<string>('');
@@ -53,6 +81,51 @@ const AppLayout: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [properties, setProperties] = useState<Property[]>(PROPERTIES);
   const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
+  const [loadingProperties, setLoadingProperties] = useState(true);
+
+  // Load properties from Supabase on mount
+  const loadProperties = useCallback(async () => {
+    setLoadingProperties(true);
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        setProperties(data.map(rowToProperty));
+      } else {
+        // Fall back to hardcoded properties if no data
+        setProperties(PROPERTIES);
+      }
+    } catch (err) {
+      console.error('Error loading properties:', err);
+      setProperties(PROPERTIES);
+    } finally {
+      setLoadingProperties(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadProperties();
+  }, [loadProperties]);
+
+  // Load owner properties when logged in as owner
+  const loadOwnerProperties = useCallback(async (ownerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('owner_id', ownerId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        setOwnerProperties(data.map(rowToProperty));
+      }
+    } catch (err) {
+      console.error('Error loading owner properties:', err);
+    }
+  }, []);
 
   const checkSubscriptionStatus = useCallback(async () => {
     if (!userId) return;
@@ -148,7 +221,7 @@ const AppLayout: React.FC = () => {
     setIsLoggedIn(true);
     setShowAuthModal(false);
     if (type === 'owner') {
-      setOwnerProperties(PROPERTIES.slice(0, 3).map(p => ({ ...p, ownerId: newUserId })));
+      loadOwnerProperties(newUserId);
     }
     if (!disclaimerAccepted) {
       setShowDisclaimerModal(true);
@@ -180,49 +253,65 @@ const AppLayout: React.FC = () => {
   };
 
   const canViewContact = (property: Property): boolean => {
-    if (property.category === 'residential') {
-      return subscriptionAccess.residentialRental;
-    }
-    if (property.category === 'commercial') {
-      return subscriptionAccess.commercialRental;
-    }
+    if (property.category === 'commercial' && property.transactionType === 'rent') return true;
+    if (property.category === 'residential') return subscriptionAccess.residentialRental;
+    if (property.category === 'commercial') return subscriptionAccess.commercialRental;
     return false;
   };
 
-  const handleListProperty = (propertyData: Partial<Property>) => {
-    const newProperty: Property = {
-      id: `new-${Date.now()}`,
-      title: propertyData.title || '',
-      category: propertyData.category || 'residential',
-      type: propertyData.type || 'house',
-      transactionType: propertyData.transactionType || 'rent',
-      price: propertyData.price || 0,
-      currency: 'USD',
-      location: `${propertyData.location}, ${propertyData.city}`,
-      city: propertyData.city || 'Harare',
-      description: propertyData.description || '',
-      amenities: propertyData.amenities || [],
-      images: ['https://d64gsuwffb70l.cloudfront.net/6946db6198d16b00e323578d_1766251491901_702fd7fe.png'],
-      bedrooms: propertyData.bedrooms,
-      bathrooms: propertyData.bathrooms,
-      size: propertyData.size,
-      sizeUnit: propertyData.sizeUnit || 'sqm',
-      status: 'available',
-      ownerId: userId,
-      ownerName: userName,
-      ownerPhone: propertyData.ownerPhone || '',
-      ownerEmail: propertyData.ownerEmail || '',
-      ownerWhatsApp: propertyData.ownerWhatsApp,
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0]
-    };
-    setOwnerProperties(prev => [newProperty, ...prev]);
-    setProperties(prev => [newProperty, ...prev]);
+  const handleListProperty = async (propertyData: Partial<Property>) => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .insert({
+          title: propertyData.title,
+          category: propertyData.category,
+          type: propertyData.type,
+          transaction_type: propertyData.transactionType,
+          price: propertyData.price,
+          currency: 'USD',
+          location: propertyData.location,
+          city: propertyData.city,
+          description: propertyData.description,
+          amenities: propertyData.amenities || [],
+          images: propertyData.images || [],
+          bedrooms: propertyData.bedrooms || null,
+          bathrooms: propertyData.bathrooms || null,
+          size: propertyData.size || null,
+          size_unit: propertyData.sizeUnit || 'sqm',
+          status: 'available',
+          owner_id: userId,
+          owner_name: userName,
+          owner_phone: propertyData.ownerPhone,
+          owner_email: propertyData.ownerEmail,
+          owner_whatsapp: propertyData.ownerWhatsApp || null,
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const newProperty = rowToProperty(data);
+        setProperties(prev => [newProperty, ...prev]);
+        setOwnerProperties(prev => [newProperty, ...prev]);
+      } else {
+        console.error('Error saving property:', error);
+      }
+    } catch (err) {
+      console.error('Error saving property:', err);
+    }
     setShowListPropertyModal(false);
     setEditingProperty(null);
   };
 
-  const handleUpdatePropertyStatus = (propertyId: string, status: 'available' | 'leased' | 'sold') => {
+  const handleUpdatePropertyStatus = async (propertyId: string, status: 'available' | 'leased' | 'sold') => {
+    try {
+      await supabase
+        .from('properties')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', propertyId);
+    } catch (err) {
+      console.error('Error updating property status:', err);
+    }
     setOwnerProperties(prev => prev.map(p =>
       p.id === propertyId ? { ...p, status, updatedAt: new Date().toISOString().split('T')[0] } : p
     ));
@@ -231,7 +320,12 @@ const AppLayout: React.FC = () => {
     ));
   };
 
-  const handleDeleteProperty = (propertyId: string) => {
+  const handleDeleteProperty = async (propertyId: string) => {
+    try {
+      await supabase.from('properties').delete().eq('id', propertyId);
+    } catch (err) {
+      console.error('Error deleting property:', err);
+    }
     setOwnerProperties(prev => prev.filter(p => p.id !== propertyId));
     setProperties(prev => prev.filter(p => p.id !== propertyId));
   };
@@ -403,7 +497,11 @@ const AppLayout: React.FC = () => {
           activeFiltersCount={activeFiltersCount}
         />
 
-        {filteredProperties.length > 0 ? (
+        {loadingProperties ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-10 h-10 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : filteredProperties.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProperties.map((property) => (
               <PropertyCard key={property.id} property={property} onClick={setSelectedProperty} />
