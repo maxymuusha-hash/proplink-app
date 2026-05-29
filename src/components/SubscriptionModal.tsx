@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Check, Clock, Crown, AlertCircle, Loader2 } from 'lucide-react';
-import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/types/property';
+import { X, Check, Clock, Crown, AlertCircle, Loader2, Home, Briefcase, Building2 } from 'lucide-react';
+import { SEEKER_TIERS, OWNER_TIERS, SubscriptionTier } from '@/types/property';
 import { supabase } from '@/lib/supabase';
 import PaymentModal from './PaymentModal';
 
@@ -10,6 +10,7 @@ interface SubscriptionModalProps {
   currentSubscription: string | null;
   userId: string;
   userEmail: string;
+  userType?: 'owner' | 'seeker' | null;
 }
 
 interface ActiveSubscription {
@@ -25,12 +26,16 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   onSubscribe,
   currentSubscription,
   userId,
-  userEmail
+  userEmail,
+  userType
 }) => {
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [activeSubscriptions, setActiveSubscriptions] = useState<ActiveSubscription[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Show correct tiers based on user type
+  const tiers = userType === 'owner' ? OWNER_TIERS : SEEKER_TIERS;
 
   useEffect(() => {
     fetchActiveSubscriptions();
@@ -58,13 +63,10 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   };
 
   const handleSelectTier = (tier: SubscriptionTier) => {
-    // Check if already subscribed to this tier
     const hasActiveTier = activeSubscriptions.some(
       sub => sub.subscription_type === tier.accessType && sub.status === 'paid'
     );
-    
     if (hasActiveTier) return;
-    
     setSelectedTier(tier);
   };
 
@@ -92,6 +94,31 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     return { active: false, daysLeft: 0, expiresAt: null };
   };
 
+  const getTierIcon = (tierId: string) => {
+    switch (tierId) {
+      case 'residential_rental': return <Home className="w-6 h-6 text-blue-500" />;
+      case 'commercial_rental': return <Briefcase className="w-6 h-6 text-orange-500" />;
+      case 'seller_residential': return <Home className="w-6 h-6 text-green-500" />;
+      case 'seller_commercial': return <Building2 className="w-6 h-6 text-purple-500" />;
+      default: return <Crown className="w-6 h-6 text-amber-500" />;
+    }
+  };
+
+  const getHeaderText = () => {
+    if (userType === 'owner') {
+      return {
+        title: 'List Your Property',
+        subtitle: 'Choose a listing plan to connect with seekers'
+      };
+    }
+    return {
+      title: 'Choose Your Plan',
+      subtitle: 'Subscribe to access property owner contact details'
+    };
+  };
+
+  const { title, subtitle } = getHeaderText();
+
   if (showPaymentModal && selectedTier) {
     return (
       <PaymentModal
@@ -110,13 +137,10 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
         {/* Header */}
         <div className="p-6 border-b flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Choose Your Plan</h2>
-            <p className="text-gray-600 mt-1">Subscribe to access property owner contact details</p>
+            <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
+            <p className="text-gray-600 mt-1">{subtitle}</p>
           </div>
-          <button 
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -133,7 +157,7 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                     const status = getSubscriptionStatus(sub.subscription_type);
                     return (
                       <p key={sub.id} className="text-sm text-emerald-700">
-                        {sub.subscription_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} - 
+                        {sub.subscription_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} —
                         {status.daysLeft > 0 ? ` ${status.daysLeft} days remaining` : ' Expired'}
                       </p>
                     );
@@ -151,13 +175,13 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
               <Loader2 className="w-8 h-8 text-cyan-600 animate-spin" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {SUBSCRIPTION_TIERS.map((tier) => {
+            <div className={`grid grid-cols-1 ${tiers.length === 2 ? 'md:grid-cols-2 max-w-2xl mx-auto' : 'md:grid-cols-3'} gap-6`}>
+              {tiers.map((tier) => {
                 const status = getSubscriptionStatus(tier.accessType);
                 const isSelected = selectedTier?.id === tier.id;
-                
+
                 return (
-                  <div 
+                  <div
                     key={tier.id}
                     onClick={() => handleSelectTier(tier)}
                     className={`relative rounded-2xl border-2 p-6 transition-all ${
@@ -173,31 +197,19 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                         Active
                       </span>
                     )}
-                    
-                    {tier.id === 'buyer' && !status.active && (
-                      <span className="absolute -top-3 right-4 bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                        Best Value
-                      </span>
-                    )}
 
                     <div className="flex items-center gap-2 mb-2">
-                      {tier.id === 'buyer' ? (
-                        <Crown className="w-6 h-6 text-amber-500" />
-                      ) : (
-                        <div className={`w-6 h-6 rounded-full ${
-                          tier.id === 'residential_rental' ? 'bg-blue-500' : 'bg-orange-500'
-                        }`} />
-                      )}
+                      {getTierIcon(tier.id)}
                       <h3 className="text-xl font-bold text-gray-800">{tier.name}</h3>
                     </div>
-                    
+
                     <div className="mb-4">
                       <span className="text-4xl font-bold text-cyan-600">${tier.price}</span>
                       <span className="text-gray-500">/month</span>
                     </div>
-                    
+
                     <p className="text-gray-600 text-sm mb-4">{tier.description}</p>
-                    
+
                     <ul className="space-y-3">
                       {tier.features.map((feature, index) => (
                         <li key={index} className="flex items-start gap-2">
@@ -229,27 +241,24 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
             </div>
           )}
 
-          {/* Validity Notice */}
           <div className="flex items-center justify-center gap-2 text-gray-500 mt-6">
             <Clock className="w-5 h-5" />
             <span>All subscriptions are valid for 30 days from activation</span>
           </div>
 
-          {/* Payment Info */}
           <div className="mt-4 p-4 bg-blue-50 rounded-xl">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
               <div className="text-sm text-blue-800">
                 <p className="font-semibold">Payment Information</p>
                 <p className="mt-1">
-                  Payments are processed securely via Paynow Zimbabwe. You can pay using EcoCash, OneMoney, 
+                  Payments are processed securely via Paynow Zimbabwe. You can pay using EcoCash, OneMoney,
                   InnBucks, or bank card. All transaction fees are included in the price.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Continue Button */}
           <div className="mt-6 flex justify-center">
             <button
               onClick={handleProceedToPayment}
