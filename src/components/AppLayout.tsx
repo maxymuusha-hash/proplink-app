@@ -79,7 +79,6 @@ const AppLayout: React.FC = () => {
           forSale: false
         });
 
-        // Set primary subscription type for display
         if (data.accessTypes && data.accessTypes.length > 0) {
           setSubscriptionType(data.accessTypes[0]);
         }
@@ -89,17 +88,14 @@ const AppLayout: React.FC = () => {
     }
   }, [userId]);
 
-  // Check subscription on login and periodically
   useEffect(() => {
     if (isLoggedIn && userId && userType === 'seeker') {
       checkSubscriptionStatus();
-      // Check every 5 minutes
       const interval = setInterval(checkSubscriptionStatus, 5 * 60 * 1000);
       return () => clearInterval(interval);
     }
   }, [isLoggedIn, userId, userType, checkSubscriptionStatus]);
 
-  // Check for admin access (simple demo)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'A') {
@@ -110,48 +106,40 @@ const AppLayout: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Filter properties
   const filteredProperties = useMemo(() => {
     let filtered = properties;
 
-    // Apply category filter from view
     if (currentView === 'residential') {
       filtered = filtered.filter(p => p.category === 'residential');
     } else if (currentView === 'commercial') {
       filtered = filtered.filter(p => p.category === 'commercial');
     }
 
-    // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(p => 
+      filtered = filtered.filter(p =>
         p.title.toLowerCase().includes(query) ||
         p.location.toLowerCase().includes(query) ||
         p.description.toLowerCase().includes(query)
       );
     }
 
-    // Category filter
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(p => p.category === selectedCategory);
     }
 
-    // Type filter
     if (selectedType !== 'all') {
       filtered = filtered.filter(p => p.type === selectedType);
     }
 
-    // Transaction filter
     if (selectedTransaction !== 'all') {
       filtered = filtered.filter(p => p.transactionType === selectedTransaction);
     }
 
-    // City filter
     if (selectedCity !== 'All Cities') {
       filtered = filtered.filter(p => p.city === selectedCity);
     }
 
-    // Price filter
     if (priceRange.max > 0) {
       filtered = filtered.filter(p => p.price <= priceRange.max);
     }
@@ -178,7 +166,7 @@ const AppLayout: React.FC = () => {
     setPriceRange({ min: 0, max: 0 });
   };
 
-const handleLogin = async (type: 'owner' | 'seeker') => {
+  const handleLogin = async (type: 'owner' | 'seeker') => {
     const { data: { user } } = await supabase.auth.getUser();
     const newUserId = user?.id || `user-${Date.now()}`;
     const newUserEmail = user?.email || '';
@@ -186,7 +174,12 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
     setUserId(newUserId);
     setUserEmail(newUserEmail);
     setUserType(type);
-    setUserName(user?.user_metadata?.name || (type === 'owner' ? 'Property Owner' : 'Property Seeker'));
+    setUserName(
+      user?.user_metadata?.full_name ||
+      user?.user_metadata?.name ||
+      newUserEmail.split('@')[0] ||
+      (type === 'owner' ? 'Property Owner' : 'Property Seeker')
+    );
     setIsLoggedIn(true);
     setShowAuthModal(false);
 
@@ -216,10 +209,8 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
   };
 
   const handleSubscribe = (tier: SubscriptionTier, subscription: any) => {
-    // Update local state based on subscription
     setSubscriptionType(tier.accessType);
-    
-    // Update access based on tier
+
     const newAccess = { ...subscriptionAccess };
     if (tier.accessType === 'residential_rental') {
       newAccess.residentialRental = true;
@@ -231,7 +222,7 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
       newAccess.commercialRental = true;
     }
     setSubscriptionAccess(newAccess);
-    
+
     setShowSubscriptionModal(false);
   };
 
@@ -239,15 +230,12 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
     if (property.transactionType === 'sale') {
       return subscriptionAccess.forSale;
     }
-    
     if (property.category === 'residential') {
       return subscriptionAccess.residentialRental || subscriptionAccess.forSale;
     }
-    
     if (property.category === 'commercial') {
       return subscriptionAccess.commercialRental || subscriptionAccess.forSale;
     }
-    
     return false;
   };
 
@@ -286,10 +274,10 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
   };
 
   const handleUpdatePropertyStatus = (propertyId: string, status: 'available' | 'leased' | 'sold') => {
-    setOwnerProperties(prev => prev.map(p => 
+    setOwnerProperties(prev => prev.map(p =>
       p.id === propertyId ? { ...p, status, updatedAt: new Date().toISOString().split('T')[0] } : p
     ));
-    setProperties(prev => prev.map(p => 
+    setProperties(prev => prev.map(p =>
       p.id === propertyId ? { ...p, status, updatedAt: new Date().toISOString().split('T')[0] } : p
     ));
   };
@@ -313,12 +301,10 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
     }
   };
 
-  // Admin Dashboard
   if (showAdminDashboard) {
     return <AdminDashboard onClose={() => setShowAdminDashboard(false)} />;
   }
 
-  // Owner Dashboard View
   if (currentView === 'dashboard' && userType === 'owner') {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -338,7 +324,7 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
             setShowHero(view === 'home');
           }}
         />
-        
+
         <OwnerDashboard
           properties={ownerProperties}
           onAddProperty={() => setShowListPropertyModal(true)}
@@ -391,7 +377,6 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
         }}
       />
 
-      {/* Hero Section - Only show on home view initially */}
       {showHero && currentView === 'home' && (
         <HeroSection
           onBrowseProperties={handleBrowseProperties}
@@ -407,9 +392,7 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
         />
       )}
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800">{getViewTitle()}</h2>
@@ -417,8 +400,7 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
               {filteredProperties.length} properties found
             </p>
           </div>
-          
-          {/* Subscription CTA for seekers */}
+
           {isLoggedIn && userType === 'seeker' && !subscriptionType && (
             <button
               onClick={() => setShowSubscriptionModal(true)}
@@ -430,15 +412,12 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
           )}
         </div>
 
-        {/* Category Quick Filters */}
         {!showHero && (
           <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
             <button
               onClick={() => setCurrentView('home')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                currentView === 'home'
-                  ? 'bg-cyan-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border'
+                currentView === 'home' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border'
               }`}
             >
               <Building2 className="w-4 h-4" />
@@ -447,9 +426,7 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
             <button
               onClick={() => setCurrentView('residential')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                currentView === 'residential'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border'
+                currentView === 'residential' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border'
               }`}
             >
               <Home className="w-4 h-4" />
@@ -458,9 +435,7 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
             <button
               onClick={() => setCurrentView('commercial')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                currentView === 'commercial'
-                  ? 'bg-orange-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border'
+                currentView === 'commercial' ? 'bg-orange-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-100 border'
               }`}
             >
               <Briefcase className="w-4 h-4" />
@@ -469,7 +444,6 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
           </div>
         )}
 
-        {/* Filter Bar */}
         <FilterBar
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -489,7 +463,6 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
           activeFiltersCount={activeFiltersCount}
         />
 
-        {/* Properties Grid */}
         {filteredProperties.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProperties.map((property) => (
@@ -514,7 +487,6 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
           </div>
         )}
 
-        {/* Subscription Tiers Section */}
         {!isLoggedIn && (
           <section className="mt-16 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 md:p-12">
             <div className="text-center mb-10">
@@ -525,7 +497,6 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Residential Rental */}
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
                 <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
                   <Home className="w-6 h-6 text-blue-400" />
@@ -536,28 +507,13 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
                   <span className="text-gray-400">/month</span>
                 </div>
                 <ul className="space-y-2 mb-6">
-                  <li className="text-gray-300 text-sm flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4 text-cyan-400" />
-                    Houses, Apartments, Rooms
-                  </li>
-                  <li className="text-gray-300 text-sm flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4 text-cyan-400" />
-                    Direct owner contact
-                  </li>
-                  <li className="text-gray-300 text-sm flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4 text-cyan-400" />
-                    30 days access
-                  </li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-cyan-400" />Houses, Apartments, Rooms</li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-cyan-400" />Direct owner contact</li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-cyan-400" />30 days access</li>
                 </ul>
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="w-full py-3 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors"
-                >
-                  Get Started
-                </button>
+                <button onClick={() => setShowAuthModal(true)} className="w-full py-3 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors">Get Started</button>
               </div>
 
-              {/* Commercial Rental */}
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
                 <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center mb-4">
                   <Briefcase className="w-6 h-6 text-orange-400" />
@@ -568,32 +524,15 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
                   <span className="text-gray-400">/month</span>
                 </div>
                 <ul className="space-y-2 mb-6">
-                  <li className="text-gray-300 text-sm flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4 text-cyan-400" />
-                    Offices, Shops, Warehouses
-                  </li>
-                  <li className="text-gray-300 text-sm flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4 text-cyan-400" />
-                    Direct owner contact
-                  </li>
-                  <li className="text-gray-300 text-sm flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4 text-cyan-400" />
-                    30 days access
-                  </li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-cyan-400" />Offices, Shops, Warehouses</li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-cyan-400" />Direct owner contact</li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-cyan-400" />30 days access</li>
                 </ul>
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="w-full py-3 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors"
-                >
-                  Get Started
-                </button>
+                <button onClick={() => setShowAuthModal(true)} className="w-full py-3 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors">Get Started</button>
               </div>
 
-              {/* Property Buyer */}
               <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 backdrop-blur-sm rounded-xl p-6 border border-amber-400/30 relative">
-                <div className="absolute -top-3 right-4 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  Best Value
-                </div>
+                <div className="absolute -top-3 right-4 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">Best Value</div>
                 <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center mb-4">
                   <Crown className="w-6 h-6 text-amber-400" />
                 </div>
@@ -603,66 +542,42 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
                   <span className="text-gray-400">/month</span>
                 </div>
                 <ul className="space-y-2 mb-6">
-                  <li className="text-gray-300 text-sm flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4 text-amber-400" />
-                    All properties for sale
-                  </li>
-                  <li className="text-gray-300 text-sm flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4 text-amber-400" />
-                    Direct owner contact
-                  </li>
-                  <li className="text-gray-300 text-sm flex items-center gap-2">
-                    <ArrowRight className="w-4 h-4 text-amber-400" />
-                    Priority support
-                  </li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-amber-400" />All properties for sale</li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-amber-400" />Direct owner contact</li>
+                  <li className="text-gray-300 text-sm flex items-center gap-2"><ArrowRight className="w-4 h-4 text-amber-400" />Priority support</li>
                 </ul>
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all"
-                >
-                  Get Started
-                </button>
+                <button onClick={() => setShowAuthModal(true)} className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all">Get Started</button>
               </div>
             </div>
           </section>
         )}
 
-        {/* How It Works Section */}
         <section className="mt-16">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">How PropLink Works</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">
-              Simple steps to find your perfect property or list yours for free
-            </p>
+            <p className="text-gray-500 max-w-2xl mx-auto">Simple steps to find your perfect property or list yours for free</p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-cyan-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-cyan-600">1</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Browse Properties</h3>
-              <p className="text-gray-500">
-                Search through thousands of residential and commercial properties across Zimbabwe
-              </p>
+              <p className="text-gray-500">Search through thousands of residential and commercial properties across Zimbabwe</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-cyan-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-cyan-600">2</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Subscribe</h3>
-              <p className="text-gray-500">
-                Choose a plan that fits your needs and get instant access to owner contact details
-              </p>
+              <p className="text-gray-500">Choose a plan that fits your needs and get instant access to owner contact details</p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-cyan-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-cyan-600">3</span>
               </div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">Connect Directly</h3>
-              <p className="text-gray-500">
-                Contact property owners directly via phone, email, or WhatsApp
-              </p>
+              <p className="text-gray-500">Contact property owners directly via phone, email, or WhatsApp</p>
             </div>
           </div>
         </section>
@@ -670,7 +585,6 @@ const handleLogin = async (type: 'owner' | 'seeker') => {
 
       <Footer onShowDisclaimer={() => setShowDisclaimerModal(true)} />
 
-      {/* Modals */}
       {showAuthModal && (
         <AuthModal
           onClose={() => setShowAuthModal(false)}
