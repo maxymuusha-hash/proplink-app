@@ -13,7 +13,8 @@ import AuthModal from './AuthModal';
 import ListPropertyModal from './ListPropertyModal';
 import OwnerDashboard from './OwnerDashboard';
 import AdminDashboard from './AdminDashboard';
-import { Crown, Building2, Home, Briefcase, ArrowRight } from 'lucide-react';
+import MapView from './MapView';
+import { Crown, Building2, Home, Briefcase, ArrowRight, LayoutGrid, Map } from 'lucide-react';
 
 interface SubscriptionAccess {
   residentialRental: boolean;
@@ -79,6 +80,7 @@ const AppLayout: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [selectedBedrooms, setSelectedBedrooms] = useState('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [properties, setProperties] = useState<Property[]>([]);
   const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
   const [loadingProperties, setLoadingProperties] = useState(false);
@@ -503,15 +505,38 @@ const AppLayout: React.FC = () => {
             <h2 className="text-2xl md:text-3xl font-bold text-gray-800">{getViewTitle()}</h2>
             <p className="text-gray-500 mt-1">{filteredProperties.length} properties found</p>
           </div>
-          {isLoggedIn && userType === 'seeker' && !subscriptionType && (
-            <button
-              onClick={() => setShowSubscriptionModal(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg"
-            >
-              <Crown className="w-5 h-5" />
-              Subscribe to View Contacts
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${
+                  viewMode === 'grid' ? 'bg-cyan-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Grid
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${
+                  viewMode === 'map' ? 'bg-cyan-600 text-white' : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Map className="w-4 h-4" />
+                Map
+              </button>
+            </div>
+            {isLoggedIn && userType === 'seeker' && !subscriptionType && (
+              <button
+                onClick={() => setShowSubscriptionModal(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg"
+              >
+                <Crown className="w-5 h-5" />
+                Subscribe
+              </button>
+            )}
+          </div>
         </div>
 
         {!showHero && (
@@ -559,6 +584,11 @@ const AppLayout: React.FC = () => {
           <div className="flex items-center justify-center py-20">
             <div className="w-10 h-10 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : viewMode === 'map' ? (
+          <MapView
+            properties={filteredProperties}
+            onPropertyClick={setSelectedProperty}
+          />
         ) : filteredProperties.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProperties.map((property) => (
