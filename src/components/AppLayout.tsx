@@ -50,6 +50,8 @@ const rowToProperty = (row: any): Property => ({
   updatedAt: row.updated_at,
 });
 
+const ADMIN_EMAIL = 'maxymuusha@gmail.com';
+
 const AppLayout: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<string>('');
@@ -191,12 +193,14 @@ const AppLayout: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-        setShowAdminDashboard(true);
+        if (userEmail === ADMIN_EMAIL) {
+          setShowAdminDashboard(true);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [userEmail]);
 
   const clearFilters = () => {
     setSearchQuery('');
