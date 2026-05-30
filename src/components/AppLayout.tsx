@@ -125,18 +125,20 @@ const AppLayout: React.FC = () => {
   const checkSubscriptionStatus = useCallback(async () => {
     if (!userId) return;
     try {
-      const { data, error } = await supabase.functions.invoke('check-subscription', {
-        body: { userId }
-      });
-      if (!error && data) {
-        setSubscriptionAccess(data.access || {
-          residentialRental: false,
-          commercialRental: false,
-          forSale: false
-        });
-        if (data.accessTypes && data.accessTypes.length > 0) {
-          setSubscriptionType(data.accessTypes[0]);
-        }
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'paid');
+
+      if (!error && data && data.length > 0) {
+        const access = {
+          residentialRental: data.some(s => s.subscription_type === 'residential_rental'),
+          commercialRental: data.some(s => s.subscription_type === 'commercial_rental'),
+          forSale: data.some(s => s.subscription_type === 'for_sale'),
+        };
+        setSubscriptionAccess(access);
+        setSubscriptionType(data[0].subscription_type);
       }
     } catch (err) {
       console.error('Error checking subscription:', err);
