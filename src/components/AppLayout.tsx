@@ -148,7 +148,6 @@ const AppLayout: React.FC = () => {
     await fetchSubscriptions(userId);
   }, [userId]);
 
-  // Restore session on page load
   useEffect(() => {
     const restoreSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -203,7 +202,9 @@ const AppLayout: React.FC = () => {
       filtered = filtered.filter(p =>
         p.title.toLowerCase().includes(query) ||
         p.location.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query)
+        p.description.toLowerCase().includes(query) ||
+        p.city.toLowerCase().includes(query) ||
+        p.type.toLowerCase().includes(query)
       );
     }
     if (selectedCategory !== 'all') filtered = filtered.filter(p => p.category === selectedCategory);
@@ -220,12 +221,11 @@ const AppLayout: React.FC = () => {
         filtered = filtered.filter(p => p.bedrooms === beds);
       }
     }
-    // Sort
     filtered = [...filtered].sort((a, b) => {
       if (sortBy === 'price_asc') return a.price - b.price;
       if (sortBy === 'price_desc') return b.price - a.price;
       if (sortBy === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // newest
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
     return filtered;
   }, [properties, currentView, searchQuery, selectedCategory, selectedType, selectedTransaction, selectedCity, priceRange, selectedBedrooms, sortBy]);
@@ -552,6 +552,7 @@ const AppLayout: React.FC = () => {
           setSortBy={setSortBy}
           selectedBedrooms={selectedBedrooms}
           setSelectedBedrooms={setSelectedBedrooms}
+          properties={properties}
         />
 
         {loadingProperties ? (
