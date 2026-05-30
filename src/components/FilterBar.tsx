@@ -19,6 +19,10 @@ interface FilterBarProps {
   setShowFilters: (show: boolean) => void;
   clearFilters: () => void;
   activeFiltersCount: number;
+  sortBy: string;
+  setSortBy: (sort: string) => void;
+  selectedBedrooms: string;
+  setSelectedBedrooms: (bedrooms: string) => void;
 }
 
 const FilterBar: React.FC<FilterBarProps> = ({
@@ -37,7 +41,11 @@ const FilterBar: React.FC<FilterBarProps> = ({
   showFilters,
   setShowFilters,
   clearFilters,
-  activeFiltersCount
+  activeFiltersCount,
+  sortBy,
+  setSortBy,
+  selectedBedrooms,
+  setSelectedBedrooms
 }) => {
   return (
     <div className="bg-white rounded-xl shadow-lg p-4 mb-8">
@@ -53,7 +61,19 @@ const FilterBar: React.FC<FilterBarProps> = ({
             className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
           />
         </div>
-        
+
+        {/* Sort */}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-700 bg-white"
+        >
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="price_asc">Price: Low to High</option>
+          <option value="price_desc">Price: High to Low</option>
+        </select>
+
         <button
           onClick={() => setShowFilters(!showFilters)}
           className="flex items-center justify-center gap-2 px-6 py-3 bg-navy-800 text-white rounded-lg hover:bg-navy-700 transition-colors"
@@ -72,7 +92,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
       {/* Filter Options */}
       {showFilters && (
         <div className="mt-4 pt-4 border-t border-gray-100">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Category Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
@@ -129,9 +149,38 @@ const FilterBar: React.FC<FilterBarProps> = ({
               </select>
             </div>
 
-            {/* Price Range */}
+            {/* Bedrooms Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Max Price</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Bedrooms</label>
+              <select
+                value={selectedBedrooms}
+                onChange={(e) => setSelectedBedrooms(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              >
+                <option value="all">Any Bedrooms</option>
+                <option value="1">1 Bedroom</option>
+                <option value="2">2 Bedrooms</option>
+                <option value="3">3 Bedrooms</option>
+                <option value="4">4 Bedrooms</option>
+                <option value="5">5+ Bedrooms</option>
+              </select>
+            </div>
+
+            {/* Min Price */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Min Price ($)</label>
+              <input
+                type="number"
+                placeholder="Min price"
+                value={priceRange.min || ''}
+                onChange={(e) => setPriceRange({ ...priceRange, min: Number(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              />
+            </div>
+
+            {/* Max Price */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Max Price ($)</label>
               <input
                 type="number"
                 placeholder="Max price"
