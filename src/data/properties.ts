@@ -514,7 +514,7 @@ export const PROPERTIES: Property[] = [
   }
 ];
 
-export const CITIES = ['All Cities', 'Harare', 'Bulawayo', 'Victoria Falls', 'Mutare', 'Gweru', 'Masvingo'];
+export const CITIES = [   'All Cities',   'Harare', 'Bulawayo', 'Mutare', 'Gweru', 'Masvingo', 'Chinhoyi', 'Bindura',   'Marondera', 'Chegutu', 'Kadoma', 'Kwekwe', 'Zvishavane', 'Shurugwi',   'Hwange', 'Victoria Falls', 'Beitbridge', 'Chiredzi', 'Triangle', 'Chipinge',   'Mutoko', 'Murewa', 'Rusape', 'Nyanga', 'Juliasdale', 'Kariba', 'Karoi',   'Tengwe', 'Banket', 'Norton', 'Ruwa', 'Epworth', 'Chitungwiza',   'Redcliff', 'Gokwe', 'Lupane', 'Plumtree', 'Gwanda', 'Bubi',   'Mvurwi', 'Centenary', 'Mount Darwin', 'Shamva', 'Mazowe',   'Murehwa', 'Wedza', 'Gutu', 'Zaka', 'Bikita', 'Mwenezi',   'Chivi', 'Nuanetsi', 'Mberengwa', 'Filabusi', 'Esigodini',   'Inyathi', 'Nkayi', 'Tsholotsho', 'Umzingwane', 'Insiza', ];
 
 export const PROPERTY_TYPES = [
   { value: 'all', label: 'All Types' },
