@@ -11,7 +11,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ page, onClose }) => {
     switch (page) {
       case 'about':
         return {
-          title: 'About Us',
+          title: 'About Us', 
           content: (
             <div className="space-y-4 text-gray-600 leading-relaxed">
               <p>PropLink is Zimbabwe's trusted property marketplace — built to connect landlords, sellers, tenants, and buyers directly, without the need for middlemen or expensive agents.</p>
