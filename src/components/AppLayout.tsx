@@ -198,8 +198,18 @@ const AppLayout: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedType('all');
+    setSelectedTransaction('all');
+    setSelectedCity('All Cities');
+    setPriceRange({ min: 0, max: 0 });
+    setSelectedBedrooms('all');
+    setSortBy('newest');
+  };
+
   const handleShowPage = (page: string) => {
-    // Property type filters
     const propertyTypeMap: Record<string, { category?: string; type?: string; transaction?: string }> = {
       'residential-rent': { category: 'residential', transaction: 'rent' },
       'residential-sale': { category: 'residential', transaction: 'sale' },
@@ -211,12 +221,16 @@ const AppLayout: React.FC = () => {
 
     if (propertyTypeMap[page]) {
       const filters = propertyTypeMap[page];
+      clearFilters();
       if (filters.category) setSelectedCategory(filters.category);
       if (filters.type) setSelectedType(filters.type);
       if (filters.transaction) setSelectedTransaction(filters.transaction);
       setShowHero(false);
       setCurrentView(filters.category === 'commercial' ? 'commercial' : 'residential');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        const main = document.querySelector('main');
+        if (main) main.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     } else {
       setInfoPage(page);
       setShowInfoModal(true);
@@ -271,17 +285,6 @@ const AppLayout: React.FC = () => {
     if (selectedBedrooms !== 'all') count++;
     return count;
   }, [selectedCategory, selectedType, selectedTransaction, selectedCity, priceRange, selectedBedrooms]);
-
-  const clearFilters = () => {
-    setSearchQuery('');
-    setSelectedCategory('all');
-    setSelectedType('all');
-    setSelectedTransaction('all');
-    setSelectedCity('All Cities');
-    setPriceRange({ min: 0, max: 0 });
-    setSelectedBedrooms('all');
-    setSortBy('newest');
-  };
 
   const handleLogin = async (type: 'owner' | 'seeker') => {
     const { data: { user } } = await supabase.auth.getUser();
