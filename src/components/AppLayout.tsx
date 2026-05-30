@@ -146,6 +146,34 @@ const AppLayout: React.FC = () => {
     await fetchSubscriptions(userId);
   }, [userId]);
 
+  // Restore session on page load
+  useEffect(() => {
+    const restoreSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const user = session.user;
+        const uid = user.id;
+        setUserId(uid);
+        setUserEmail(user.email || '');
+        setUserName(
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email?.split('@')[0] || 'User'
+        );
+        const savedUserType = localStorage.getItem('proplink_user_type') as 'owner' | 'seeker' | null;
+        const type = savedUserType || 'seeker';
+        setUserType(type);
+        setIsLoggedIn(true);
+        if (type === 'owner') {
+          loadOwnerProperties(uid);
+        } else {
+          await fetchSubscriptions(uid);
+        }
+      }
+    };
+    restoreSession();
+  }, []);
+
   useEffect(() => {
     if (isLoggedIn && userId && userType === 'seeker') {
       checkSubscriptionStatus();
@@ -216,6 +244,7 @@ const AppLayout: React.FC = () => {
       newUserEmail.split('@')[0] ||
       (type === 'owner' ? 'Property Owner' : 'Property Seeker')
     );
+    localStorage.setItem('proplink_user_type', type);
     setIsLoggedIn(true);
     setShowAuthModal(false);
     if (type === 'owner') {
@@ -230,6 +259,8 @@ const AppLayout: React.FC = () => {
   };
 
   const handleLogout = () => {
+    supabase.auth.signOut();
+    localStorage.removeItem('proplink_user_type');
     setIsLoggedIn(false);
     setUserId('');
     setUserEmail('');
