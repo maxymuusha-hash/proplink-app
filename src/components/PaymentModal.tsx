@@ -104,7 +104,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ tier, userId, userEmail, on
             pollUrl,
             userId,
             reference,
-            subscriptionType: tier.id
+            subscriptionType: tier.id,
+            userEmail
           })
         });
         const data = await response.json();
