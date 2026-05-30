@@ -1,10 +1,3 @@
-You pasted `Footer.tsx` instead of `InfoModal.tsx`. It seems the `InfoModal.tsx` file was accidentally saved with the Footer content instead of the InfoModal content.
-
-Go to GitHub → `src/components/InfoModal.tsx` and check what's in it. If it has Footer content, you need to replace it entirely with the correct InfoModal code.
-
-Click the **pencil icon** on `InfoModal.tsx`, select all, delete everything, and paste this:
-
-```typescript
 import React from 'react';
 import { X } from 'lucide-react';
 
@@ -48,10 +41,10 @@ const InfoModal: React.FC<InfoModalProps> = ({ page, onClose }) => {
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">For Property Seekers</h3>
                 <div className="space-y-4">
                   {[
-                    { step: '1', title: 'Browse properties', desc: 'Search through hundreds of residential and commercial properties across Zimbabwe. Filter by city, price, type, and bedrooms.' },
-                    { step: '2', title: 'Choose a plan', desc: 'Subscribe to a plan that fits your needs. Residential access starts at just $2/month. Commercial rental contacts are completely free.' },
-                    { step: '3', title: 'Pay securely', desc: 'Pay via EcoCash, OneMoney, or InnBucks. Your subscription activates instantly after payment.' },
-                    { step: '4', title: 'Contact owners directly', desc: 'View the property owner\'s phone, email, and WhatsApp. Contact them directly — no agents, no commission.' },
+                    { step: '1', title: 'Browse properties', desc: 'Search through hundreds of residential and commercial properties across Zimbabwe.' },
+                    { step: '2', title: 'Choose a plan', desc: 'Residential access from $2/month. Commercial rental contacts are completely free.' },
+                    { step: '3', title: 'Pay securely', desc: 'Pay via EcoCash, OneMoney, or InnBucks. Subscription activates instantly.' },
+                    { step: '4', title: 'Contact owners directly', desc: 'View phone, email, and WhatsApp. No agents, no commission.' },
                   ].map(item => (
                     <div key={item.step} className="flex gap-4">
                       <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -70,9 +63,9 @@ const InfoModal: React.FC<InfoModalProps> = ({ page, onClose }) => {
                 <div className="space-y-4">
                   {[
                     { step: '1', title: 'Create a free account', desc: 'Sign up as a Property Owner in less than 2 minutes.' },
-                    { step: '2', title: 'List your property', desc: 'Fill in your property details, upload photos, and set your price. Listing is completely free.' },
-                    { step: '3', title: 'Get contacted directly', desc: 'Serious seekers will contact you directly via phone, email, or WhatsApp. No middlemen involved.' },
-                    { step: '4', title: 'Manage your listings', desc: 'Update, edit, or remove your listings anytime from your owner dashboard.' },
+                    { step: '2', title: 'List your property', desc: 'Fill in details, upload photos, and set your price. Listing is completely free.' },
+                    { step: '3', title: 'Get contacted directly', desc: 'Serious seekers contact you directly. No middlemen involved.' },
+                    { step: '4', title: 'Manage your listings', desc: 'Update, edit, or remove listings anytime from your dashboard.' },
                   ].map(item => (
                     <div key={item.step} className="flex gap-4">
                       <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -135,7 +128,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ page, onClose }) => {
                   <li>✅ Get contacted directly by seekers</li>
                 </ul>
               </div>
-              <p className="text-sm text-gray-500">All payments are processed securely via Paynow Zimbabwe. Subscriptions are valid for 30 days from activation date.</p>
+              <p className="text-sm text-gray-500">All payments processed securely via Paynow Zimbabwe. Subscriptions valid for 30 days.</p>
             </div>
           )
         };
@@ -153,7 +146,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ page, onClose }) => {
                 { q: 'Can I list properties in any city?', a: 'Yes, you can list properties in any city across Zimbabwe including Harare, Bulawayo, Victoria Falls, Mutare, Gweru, and Masvingo.' },
                 { q: 'How do I update or remove my listing?', a: 'Log in as a Property Owner and go to your dashboard. You can edit, update the status, or delete your listings at any time.' },
                 { q: 'Is my payment information secure?', a: 'Yes. All payments are handled by Paynow Zimbabwe — we never store your payment details on our servers.' },
-                { q: 'What if my subscription payment went through but my account is not activated?', a: 'Please contact us at proplinkall@gmail.com or call +263 73 611 2106 with your payment reference number and we will resolve it promptly.' },
+                { q: 'What if my payment went through but account is not activated?', a: 'Contact us at proplinkall@gmail.com or call +263 73 611 2106 with your payment reference and we will resolve it promptly.' },
               ].map((item, i) => (
                 <div key={i} className="border border-gray-100 rounded-lg p-4">
                   <p className="font-semibold text-gray-800 mb-2">{item.q}</p>
@@ -216,6 +209,3 @@ const InfoModal: React.FC<InfoModalProps> = ({ page, onClose }) => {
 };
 
 export default InfoModal;
-```
-
-Commit and it should work!
