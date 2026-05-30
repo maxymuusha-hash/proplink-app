@@ -120,13 +120,12 @@ const AppLayout: React.FC = () => {
     }
   }, []);
 
-  const checkSubscriptionStatus = useCallback(async () => {
-    if (!userId) return;
+  const fetchSubscriptions = async (uid: string) => {
     try {
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', uid)
         .eq('status', 'paid');
       if (!error && data && data.length > 0) {
         const access = {
@@ -138,8 +137,13 @@ const AppLayout: React.FC = () => {
         setSubscriptionType(data[0].subscription_type);
       }
     } catch (err) {
-      console.error('Error checking subscription:', err);
+      console.error('Error fetching subscriptions:', err);
     }
+  };
+
+  const checkSubscriptionStatus = useCallback(async () => {
+    if (!userId) return;
+    await fetchSubscriptions(userId);
   }, [userId]);
 
   useEffect(() => {
@@ -218,26 +222,7 @@ const AppLayout: React.FC = () => {
       loadOwnerProperties(newUserId);
     }
     if (type === 'seeker' && newUserId) {
-      setTimeout(async () => {
-        try {
-          const { data, error } = await supabase
-            .from('subscriptions')
-            .select('*')
-            .eq('user_id', newUserId)
-            .eq('status', 'paid');
-          if (!error && data && data.length > 0) {
-            const access = {
-              residentialRental: data.some(s => s.subscription_type === 'residential_rental'),
-              commercialRental: data.some(s => s.subscription_type === 'commercial_rental'),
-              forSale: data.some(s => s.subscription_type === 'for_sale'),
-            };
-            setSubscriptionAccess(access);
-            setSubscriptionType(data[0].subscription_type);
-          }
-        } catch (err) {
-          console.error('Error checking subscription on login:', err);
-        }
-      }, 1000);
+      await fetchSubscriptions(newUserId);
     }
     if (!disclaimerAccepted) {
       setShowDisclaimerModal(true);
