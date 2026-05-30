@@ -88,7 +88,6 @@ const AppLayout: React.FC = () => {
         .from('properties')
         .select('*')
         .order('created_at', { ascending: false });
-
       if (!error && data) {
         setProperties(data.map(rowToProperty));
       } else {
@@ -113,7 +112,6 @@ const AppLayout: React.FC = () => {
         .select('*')
         .eq('owner_id', ownerId)
         .order('created_at', { ascending: false });
-
       if (!error && data) {
         setOwnerProperties(data.map(rowToProperty));
       }
@@ -130,7 +128,6 @@ const AppLayout: React.FC = () => {
         .select('*')
         .eq('user_id', userId)
         .eq('status', 'paid');
-
       if (!error && data && data.length > 0) {
         const access = {
           residentialRental: data.some(s => s.subscription_type === 'residential_rental'),
@@ -220,6 +217,28 @@ const AppLayout: React.FC = () => {
     if (type === 'owner') {
       loadOwnerProperties(newUserId);
     }
+    if (type === 'seeker' && newUserId) {
+      setTimeout(async () => {
+        try {
+          const { data, error } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', newUserId)
+            .eq('status', 'paid');
+          if (!error && data && data.length > 0) {
+            const access = {
+              residentialRental: data.some(s => s.subscription_type === 'residential_rental'),
+              commercialRental: data.some(s => s.subscription_type === 'commercial_rental'),
+              forSale: data.some(s => s.subscription_type === 'for_sale'),
+            };
+            setSubscriptionAccess(access);
+            setSubscriptionType(data[0].subscription_type);
+          }
+        } catch (err) {
+          console.error('Error checking subscription on login:', err);
+        }
+      }, 1000);
+    }
     if (!disclaimerAccepted) {
       setShowDisclaimerModal(true);
     }
@@ -285,7 +304,6 @@ const AppLayout: React.FC = () => {
         })
         .select()
         .single();
-
       if (!error && data) {
         const newProperty = rowToProperty(data);
         setProperties(prev => [newProperty, ...prev]);
@@ -540,7 +558,6 @@ const AppLayout: React.FC = () => {
                 </ul>
                 <button onClick={() => setShowAuthModal(true)} className="w-full py-3 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors">Get Started</button>
               </div>
-
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
                 <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mb-4">
                   <Briefcase className="w-6 h-6 text-green-400" />
