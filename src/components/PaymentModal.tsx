@@ -181,7 +181,7 @@ Email: ${userEmail}
 Thank you for subscribing to PropLink!
 Your subscription is now active.
 
-For support: proplink@gmail.com
+For support: proplinkall@gmail.com
 =============================
     `.trim();
     const blob = new Blob([receiptContent], { type: 'text/plain' });
