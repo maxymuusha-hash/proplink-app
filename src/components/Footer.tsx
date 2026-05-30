@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Building2, Mail, Phone, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 
 interface FooterProps {
   onShowDisclaimer: () => void;
@@ -62,7 +62,7 @@ const Footer: React.FC<FooterProps> = ({ onShowDisclaimer }) => {
               <li><a href="#" className="hover:text-cyan-400 transition-colors">Pricing</a></li>
               <li><a href="#" className="hover:text-cyan-400 transition-colors">FAQs</a></li>
               <li>
-                <button 
+                <button
                   onClick={onShowDisclaimer}
                   className="hover:text-cyan-400 transition-colors"
                 >
@@ -77,17 +77,15 @@ const Footer: React.FC<FooterProps> = ({ onShowDisclaimer }) => {
           <div>
             <h3 className="text-white font-semibold text-lg mb-4">Contact Us</h3>
             <ul className="space-y-3">
-              <li className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-                <span>123 Samora Machel Ave, Harare, Zimbabwe</span>
-              </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                <span>+263 77 123 4567</span>
+                <span>+263 73 611 2106</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                <span>info@proplink.co.zw</span>
+                <a href="mailto:proplink@gmail.com" className="hover:text-cyan-400 transition-colors">
+                  proplink@gmail.com
+                </a>
               </li>
             </ul>
           </div>
@@ -102,7 +100,7 @@ const Footer: React.FC<FooterProps> = ({ onShowDisclaimer }) => {
               © {new Date().getFullYear()} PropLink. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm">
-              <button 
+              <button
                 onClick={onShowDisclaimer}
                 className="text-gray-500 hover:text-cyan-400 transition-colors"
               >
