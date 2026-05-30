@@ -25,6 +25,33 @@ interface PaymentState {
   instructions: string | null;
 }
 
+const METHOD_CONFIG: Record<string, { name: string; placeholder: string; hint: string; instruction: string }> = {
+  ecocash: {
+    name: 'EcoCash',
+    placeholder: '077XXXXXXX or 078XXXXXXX',
+    hint: 'Enter your Econet number (077 or 078)',
+    instruction: 'Check your phone for an EcoCash payment request and enter your EcoCash PIN to authorize.'
+  },
+  onemoney: {
+    name: 'OneMoney',
+    placeholder: '071XXXXXXX',
+    hint: 'Enter your NetOne number (071)',
+    instruction: 'Check your phone for a OneMoney payment request and enter your OneMoney PIN to authorize.'
+  },
+  innbucks: {
+    name: 'InnBucks',
+    placeholder: 'Enter your InnBucks registered number',
+    hint: 'Enter the phone number registered on your InnBucks account',
+    instruction: 'Check your InnBucks app for a payment request and enter your InnBucks PIN to authorize.'
+  },
+  web: {
+    name: 'Card/Bank',
+    placeholder: '',
+    hint: '',
+    instruction: 'You will be redirected to complete your card or bank payment securely.'
+  }
+};
+
 const PaymentModal: React.FC<PaymentModalProps> = ({ tier, userId, userEmail, onClose, onSuccess }) => {
   const [state, setState] = useState<PaymentState>({
     step: 'method',
@@ -40,18 +67,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ tier, userId, userEmail, on
   const [isProcessing, setIsProcessing] = useState(false);
 
   const paymentMethods = [
-    { id: 'ecocash' as PaymentMethod, name: 'EcoCash', icon: '📱', color: 'bg-green-500' },
-    { id: 'onemoney' as PaymentMethod, name: 'OneMoney', icon: '💳', color: 'bg-purple-500' },
-    { id: 'innbucks' as PaymentMethod, name: 'InnBucks', icon: '🏦', color: 'bg-blue-500' },
-    { id: 'web' as PaymentMethod, name: 'Card/Bank', icon: '💻', color: 'bg-gray-700' }
+    { id: 'ecocash' as PaymentMethod, name: 'EcoCash', icon: '📱', description: 'Econet (077/078)' },
+    { id: 'onemoney' as PaymentMethod, name: 'OneMoney', icon: '💳', description: 'NetOne (071)' },
+    { id: 'innbucks' as PaymentMethod, name: 'InnBucks', icon: '🏦', description: 'InnBucks App' },
+    { id: 'web' as PaymentMethod, name: 'Card/Bank', icon: '💻', description: 'Visa/Mastercard' }
   ];
 
   const selectMethod = (method: PaymentMethod) => {
-    setState(prev => ({ ...prev, method }));
+    setState(prev => ({ ...prev, method, phoneNumber: '' }));
     if (method === 'web') {
       initiatePayment(method);
     } else {
-      setState(prev => ({ ...prev, step: 'phone' }));
+      setState(prev => ({ ...prev, method, phoneNumber: '', step: 'phone' }));
     }
   };
 
@@ -59,7 +86,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ tier, userId, userEmail, on
     setState(prev => ({ ...prev, step: 'processing', error: null }));
     setIsProcessing(true);
     const resolvedPhone = phone || state.phoneNumber;
-    if (!resolvedPhone || !userEmail || !userId) {
+    if (method !== 'web' && (!resolvedPhone || !userEmail || !userId)) {
       setState(prev => ({ ...prev, step: 'error', error: 'Missing phone number or account details.' }));
       setIsProcessing(false);
       return;
@@ -72,7 +99,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ tier, userId, userEmail, on
         body: JSON.stringify({
           reference,
           email: userEmail,
-          phone: resolvedPhone,
+          phone: resolvedPhone || '0770000000',
           method: method === 'web' ? 'ecocash' : method,
           items: [{ name: tier.name, amount: tier.price }]
         })
@@ -154,7 +181,7 @@ Email: ${userEmail}
 Thank you for subscribing to PropLink!
 Your subscription is now active.
 
-For support: info@proplink.co.zw
+For support: proplink@gmail.com
 =============================
     `.trim();
     const blob = new Blob([receiptContent], { type: 'text/plain' });
@@ -165,6 +192,8 @@ For support: info@proplink.co.zw
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const currentMethod = state.method ? METHOD_CONFIG[state.method] : null;
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
@@ -192,8 +221,9 @@ For support: info@proplink.co.zw
                     onClick={() => selectMethod(method.id)}
                     className="p-4 border-2 border-gray-200 rounded-xl hover:border-cyan-500 hover:bg-cyan-50 transition-all text-center"
                   >
-                    <span className="text-2xl mb-2 block">{method.icon}</span>
-                    <span className="font-medium text-gray-800">{method.name}</span>
+                    <span className="text-2xl mb-1 block">{method.icon}</span>
+                    <span className="font-medium text-gray-800 block text-sm">{method.name}</span>
+                    <span className="text-xs text-gray-500 block mt-0.5">{method.description}</span>
                   </button>
                 ))}
               </div>
@@ -206,35 +236,35 @@ For support: info@proplink.co.zw
             </div>
           )}
 
-          {state.step === 'phone' && (
+          {state.step === 'phone' && currentMethod && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Enter Phone Number</h3>
-              <p className="text-gray-600 text-sm mb-4">
-                Enter your {state.method === 'ecocash' ? 'EcoCash' : state.method === 'onemoney' ? 'OneMoney' : 'InnBucks'} registered phone number
-              </p>
+              <h3 className="text-lg font-semibold text-gray-800 mb-1">Enter Phone Number</h3>
+              <p className="text-gray-500 text-sm mb-4">{currentMethod.hint}</p>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {currentMethod.name} Number
+                </label>
                 <div className="relative">
                   <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="tel"
                     value={state.phoneNumber}
                     onChange={(e) => setState(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                    placeholder="0771234567"
+                    placeholder={currentMethod.placeholder}
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   />
                 </div>
               </div>
               <div className="flex gap-3">
                 <button
-                  onClick={() => setState(prev => ({ ...prev, step: 'method', method: null }))}
+                  onClick={() => setState(prev => ({ ...prev, step: 'method', method: null, phoneNumber: '' }))}
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Back
                 </button>
                 <button
                   onClick={() => initiatePayment(state.method!, state.phoneNumber)}
-                  disabled={!state.phoneNumber || state.phoneNumber.length < 10}
+                  disabled={!state.phoneNumber || state.phoneNumber.length < 9}
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-lg font-semibold hover:from-cyan-700 hover:to-blue-700 disabled:opacity-50"
                 >
                   Pay ${tier.price}
@@ -243,20 +273,16 @@ For support: info@proplink.co.zw
             </div>
           )}
 
-          {state.step === 'processing' && (
+          {state.step === 'processing' && currentMethod && (
             <div className="text-center py-8">
               <Loader2 className="w-16 h-16 text-cyan-600 animate-spin mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                {isProcessing ? 'Processing Payment...' : 'Waiting for Payment'}
+                {isProcessing ? 'Processing Payment...' : `Waiting for ${currentMethod.name} Payment`}
               </h3>
-              {state.method && state.method !== 'web' && (
-                <div className="mt-4 p-4 bg-green-50 rounded-xl text-left">
-                  <p className="text-sm font-medium text-green-800 mb-1">Payment Instructions:</p>
-                  <p className="text-sm text-green-700">
-                    Check your phone for an EcoCash payment request and enter your PIN to authorize. Once done, wait — your subscription will activate automatically.
-                  </p>
-                </div>
-              )}
+              <div className="mt-4 p-4 bg-green-50 rounded-xl text-left">
+                <p className="text-sm font-medium text-green-800 mb-1">Payment Instructions:</p>
+                <p className="text-sm text-green-700">{currentMethod.instruction}</p>
+              </div>
               {state.reference && (
                 <p className="text-gray-500 text-sm mt-3">Reference: {state.reference}</p>
               )}
