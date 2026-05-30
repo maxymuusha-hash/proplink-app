@@ -77,6 +77,8 @@ const AppLayout: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState('All Cities');
   const [priceRange, setPriceRange] = useState({ min: 0, max: 0 });
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
+  const [selectedBedrooms, setSelectedBedrooms] = useState('all');
   const [properties, setProperties] = useState<Property[]>([]);
   const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
   const [loadingProperties, setLoadingProperties] = useState(false);
@@ -208,9 +210,25 @@ const AppLayout: React.FC = () => {
     if (selectedType !== 'all') filtered = filtered.filter(p => p.type === selectedType);
     if (selectedTransaction !== 'all') filtered = filtered.filter(p => p.transactionType === selectedTransaction);
     if (selectedCity !== 'All Cities') filtered = filtered.filter(p => p.city === selectedCity);
+    if (priceRange.min > 0) filtered = filtered.filter(p => p.price >= priceRange.min);
     if (priceRange.max > 0) filtered = filtered.filter(p => p.price <= priceRange.max);
+    if (selectedBedrooms !== 'all') {
+      const beds = parseInt(selectedBedrooms);
+      if (beds === 5) {
+        filtered = filtered.filter(p => p.bedrooms !== undefined && p.bedrooms >= 5);
+      } else {
+        filtered = filtered.filter(p => p.bedrooms === beds);
+      }
+    }
+    // Sort
+    filtered = [...filtered].sort((a, b) => {
+      if (sortBy === 'price_asc') return a.price - b.price;
+      if (sortBy === 'price_desc') return b.price - a.price;
+      if (sortBy === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // newest
+    });
     return filtered;
-  }, [properties, currentView, searchQuery, selectedCategory, selectedType, selectedTransaction, selectedCity, priceRange]);
+  }, [properties, currentView, searchQuery, selectedCategory, selectedType, selectedTransaction, selectedCity, priceRange, selectedBedrooms, sortBy]);
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -219,8 +237,10 @@ const AppLayout: React.FC = () => {
     if (selectedTransaction !== 'all') count++;
     if (selectedCity !== 'All Cities') count++;
     if (priceRange.max > 0) count++;
+    if (priceRange.min > 0) count++;
+    if (selectedBedrooms !== 'all') count++;
     return count;
-  }, [selectedCategory, selectedType, selectedTransaction, selectedCity, priceRange]);
+  }, [selectedCategory, selectedType, selectedTransaction, selectedCity, priceRange, selectedBedrooms]);
 
   const clearFilters = () => {
     setSearchQuery('');
@@ -229,6 +249,8 @@ const AppLayout: React.FC = () => {
     setSelectedTransaction('all');
     setSelectedCity('All Cities');
     setPriceRange({ min: 0, max: 0 });
+    setSelectedBedrooms('all');
+    setSortBy('newest');
   };
 
   const handleLogin = async (type: 'owner' | 'seeker') => {
@@ -526,6 +548,10 @@ const AppLayout: React.FC = () => {
           setShowFilters={setShowFilters}
           clearFilters={clearFilters}
           activeFiltersCount={activeFiltersCount}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          selectedBedrooms={selectedBedrooms}
+          setSelectedBedrooms={setSelectedBedrooms}
         />
 
         {loadingProperties ? (
@@ -541,10 +567,10 @@ const AppLayout: React.FC = () => {
         ) : (
           <div className="bg-white rounded-xl p-12 text-center">
             <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Properties Yet</h3>
-            <p className="text-gray-500 mb-6">Be the first to list a property on PropLink</p>
-            <button onClick={() => setShowAuthModal(true)} className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition-colors">
-              List Your Property
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Properties Found</h3>
+            <p className="text-gray-500 mb-6">Try adjusting your filters or search query</p>
+            <button onClick={clearFilters} className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition-colors">
+              Clear Filters
             </button>
           </div>
         )}
