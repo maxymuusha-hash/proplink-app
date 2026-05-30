@@ -1,112 +1,221 @@
-import React from 'react';
-import { Building2, Mail, Phone, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+You pasted `Footer.tsx` instead of `InfoModal.tsx`. It seems the `InfoModal.tsx` file was accidentally saved with the Footer content instead of the InfoModal content.
 
-interface FooterProps {
-  onShowDisclaimer: () => void;
-  onShowPage: (page: string) => void;
+Go to GitHub → `src/components/InfoModal.tsx` and check what's in it. If it has Footer content, you need to replace it entirely with the correct InfoModal code.
+
+Click the **pencil icon** on `InfoModal.tsx`, select all, delete everything, and paste this:
+
+```typescript
+import React from 'react';
+import { X } from 'lucide-react';
+
+interface InfoModalProps {
+  page: string;
+  onClose: () => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ onShowDisclaimer, onShowPage }) => {
-  return (
-    <footer className="bg-gray-900 text-gray-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-white" />
+const InfoModal: React.FC<InfoModalProps> = ({ page, onClose }) => {
+  const getContent = () => {
+    switch (page) {
+      case 'about':
+        return {
+          title: 'About Us',
+          content: (
+            <div className="space-y-4 text-gray-600 leading-relaxed">
+              <p>PropLink is Zimbabwe's trusted property marketplace — built to connect landlords, sellers, tenants, and buyers directly, without the need for middlemen or expensive agents.</p>
+              <p>We believe finding or listing a property in Zimbabwe should be simple, affordable, and transparent. That's why we built a platform where property owners can list for free, and seekers can browse and contact owners directly for as little as $2/month.</p>
+              <h3 className="text-lg font-semibold text-gray-800 mt-6">Our Mission</h3>
+              <p>To make property transactions in Zimbabwe more accessible, affordable, and efficient for everyone — from first-time renters to seasoned property investors.</p>
+              <h3 className="text-lg font-semibold text-gray-800 mt-6">What We Offer</h3>
+              <ul className="space-y-2 list-disc list-inside">
+                <li>Residential properties — houses, apartments, rooms, and stands</li>
+                <li>Commercial properties — offices, shops, and warehouses</li>
+                <li>Direct owner-to-seeker connections across Zimbabwe</li>
+                <li>EcoCash, OneMoney, and InnBucks payment support</li>
+                <li>Properties across Harare, Bulawayo, Victoria Falls, and more</li>
+              </ul>
+              <h3 className="text-lg font-semibold text-gray-800 mt-6">Contact Us</h3>
+              <p>Email: <a href="mailto:proplinkall@gmail.com" className="text-cyan-600 hover:underline">proplinkall@gmail.com</a></p>
+              <p>Phone: <a href="tel:+263736112106" className="text-cyan-600 hover:underline">+263 73 611 2106</a></p>
+            </div>
+          )
+        };
+      case 'how-it-works':
+        return {
+          title: 'How It Works',
+          content: (
+            <div className="space-y-6 text-gray-600">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">For Property Seekers</h3>
+                <div className="space-y-4">
+                  {[
+                    { step: '1', title: 'Browse properties', desc: 'Search through hundreds of residential and commercial properties across Zimbabwe. Filter by city, price, type, and bedrooms.' },
+                    { step: '2', title: 'Choose a plan', desc: 'Subscribe to a plan that fits your needs. Residential access starts at just $2/month. Commercial rental contacts are completely free.' },
+                    { step: '3', title: 'Pay securely', desc: 'Pay via EcoCash, OneMoney, or InnBucks. Your subscription activates instantly after payment.' },
+                    { step: '4', title: 'Contact owners directly', desc: 'View the property owner\'s phone, email, and WhatsApp. Contact them directly — no agents, no commission.' },
+                  ].map(item => (
+                    <div key={item.step} className="flex gap-4">
+                      <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-cyan-600 font-bold text-sm">{item.step}</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">{item.title}</p>
+                        <p className="text-sm">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <span className="text-2xl font-bold text-white">
-                Prop<span className="text-cyan-400">Link</span>
-              </span>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">For Property Owners</h3>
+                <div className="space-y-4">
+                  {[
+                    { step: '1', title: 'Create a free account', desc: 'Sign up as a Property Owner in less than 2 minutes.' },
+                    { step: '2', title: 'List your property', desc: 'Fill in your property details, upload photos, and set your price. Listing is completely free.' },
+                    { step: '3', title: 'Get contacted directly', desc: 'Serious seekers will contact you directly via phone, email, or WhatsApp. No middlemen involved.' },
+                    { step: '4', title: 'Manage your listings', desc: 'Update, edit, or remove your listings anytime from your owner dashboard.' },
+                  ].map(item => (
+                    <div key={item.step} className="flex gap-4">
+                      <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-cyan-600 font-bold text-sm">{item.step}</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">{item.title}</p>
+                        <p className="text-sm">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <p className="text-gray-400 mb-4">
-              Zimbabwe's trusted property marketplace connecting landlords, sellers, tenants, and buyers.
-            </p>
-            <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-cyan-600 transition-colors">
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-cyan-600 transition-colors">
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-cyan-600 transition-colors">
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-cyan-600 transition-colors">
-                <Linkedin className="w-5 h-5" />
-              </a>
+          )
+        };
+      case 'pricing':
+        return {
+          title: 'Pricing',
+          content: (
+            <div className="space-y-6 text-gray-600">
+              <p>PropLink is designed to be affordable for everyone in Zimbabwe.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="border border-gray-200 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-1">Residential Rental</h3>
+                  <div className="mb-3">
+                    <span className="text-3xl font-bold text-cyan-600">$2</span>
+                    <span className="text-gray-500">/month</span>
+                  </div>
+                  <ul className="space-y-2 text-sm">
+                    <li>✅ Houses, Apartments, Rooms</li>
+                    <li>✅ View owner contact details</li>
+                    <li>✅ 30 days access</li>
+                    <li>✅ Pay via EcoCash/OneMoney</li>
+                  </ul>
+                </div>
+                <div className="border border-emerald-200 bg-emerald-50 rounded-xl p-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-1">Commercial Rental</h3>
+                  <div className="mb-3">
+                    <span className="text-3xl font-bold text-emerald-600">FREE</span>
+                  </div>
+                  <ul className="space-y-2 text-sm">
+                    <li>✅ Offices, Shops, Warehouses</li>
+                    <li>✅ View owner contact details</li>
+                    <li>✅ No subscription needed</li>
+                    <li>✅ Always free</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="border border-blue-200 bg-blue-50 rounded-xl p-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-1">Property Owners</h3>
+                <div className="mb-3">
+                  <span className="text-3xl font-bold text-blue-600">FREE</span>
+                  <span className="text-gray-500"> — always</span>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  <li>✅ List unlimited properties</li>
+                  <li>✅ Upload photos</li>
+                  <li>✅ Manage listings from dashboard</li>
+                  <li>✅ Get contacted directly by seekers</li>
+                </ul>
+              </div>
+              <p className="text-sm text-gray-500">All payments are processed securely via Paynow Zimbabwe. Subscriptions are valid for 30 days from activation date.</p>
             </div>
-          </div>
+          )
+        };
+      case 'faqs':
+        return {
+          title: 'Frequently Asked Questions',
+          content: (
+            <div className="space-y-4 text-gray-600">
+              {[
+                { q: 'Is listing a property free?', a: 'Yes, listing your property on PropLink is completely free. There are no hidden charges for property owners.' },
+                { q: 'How do I contact a property owner?', a: 'Subscribe to a plan, then open any property listing to view the owner\'s phone number, email, and WhatsApp contact.' },
+                { q: 'What payment methods are accepted?', a: 'We accept EcoCash, OneMoney, and InnBucks. All payments are processed securely via Paynow Zimbabwe.' },
+                { q: 'How long does a subscription last?', a: 'All subscriptions are valid for 30 days from the date of activation.' },
+                { q: 'Are commercial rental contacts really free?', a: 'Yes! You can view contact details for all commercial rental properties without any subscription.' },
+                { q: 'Can I list properties in any city?', a: 'Yes, you can list properties in any city across Zimbabwe including Harare, Bulawayo, Victoria Falls, Mutare, Gweru, and Masvingo.' },
+                { q: 'How do I update or remove my listing?', a: 'Log in as a Property Owner and go to your dashboard. You can edit, update the status, or delete your listings at any time.' },
+                { q: 'Is my payment information secure?', a: 'Yes. All payments are handled by Paynow Zimbabwe — we never store your payment details on our servers.' },
+                { q: 'What if my subscription payment went through but my account is not activated?', a: 'Please contact us at proplinkall@gmail.com or call +263 73 611 2106 with your payment reference number and we will resolve it promptly.' },
+              ].map((item, i) => (
+                <div key={i} className="border border-gray-100 rounded-lg p-4">
+                  <p className="font-semibold text-gray-800 mb-2">{item.q}</p>
+                  <p className="text-sm">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          )
+        };
+      case 'privacy':
+        return {
+          title: 'Privacy Policy',
+          content: (
+            <div className="space-y-4 text-gray-600 leading-relaxed">
+              <p className="text-sm text-gray-500">Last updated: May 2026</p>
+              <p>PropLink is committed to protecting your privacy. This policy explains how we collect, use, and protect your information.</p>
+              <h3 className="text-lg font-semibold text-gray-800">Information We Collect</h3>
+              <ul className="space-y-2 list-disc list-inside text-sm">
+                <li>Name and email address when you create an account</li>
+                <li>Property details when you list a property</li>
+                <li>Payment references (we do not store card or mobile money details)</li>
+                <li>Usage data such as pages visited and searches made</li>
+              </ul>
+              <h3 className="text-lg font-semibold text-gray-800">How We Use Your Information</h3>
+              <ul className="space-y-2 list-disc list-inside text-sm">
+                <li>To provide and improve our services</li>
+                <li>To process your subscription payments</li>
+                <li>To send you important notifications about your account</li>
+                <li>To display your property listings to potential seekers</li>
+              </ul>
+              <h3 className="text-lg font-semibold text-gray-800">Data Security</h3>
+              <p className="text-sm">We use Supabase for secure data storage and Paynow Zimbabwe for payment processing. We do not sell or share your personal data with third parties.</p>
+              <h3 className="text-lg font-semibold text-gray-800">Contact</h3>
+              <p className="text-sm">For privacy concerns, contact us at <a href="mailto:proplinkall@gmail.com" className="text-cyan-600 hover:underline">proplinkall@gmail.com</a></p>
+            </div>
+          )
+        };
+      default:
+        return { title: '', content: null };
+    }
+  };
 
-          <div>
-            <h3 className="text-white font-semibold text-lg mb-4">Property Types</h3>
-            <ul className="space-y-2">
-              <li><button onClick={() => onShowPage('residential-rent')} className="hover:text-cyan-400 transition-colors text-left">Houses for Rent</button></li>
-              <li><button onClick={() => onShowPage('residential-sale')} className="hover:text-cyan-400 transition-colors text-left">Houses for Sale</button></li>
-              <li><button onClick={() => onShowPage('apartments')} className="hover:text-cyan-400 transition-colors text-left">Apartments</button></li>
-              <li><button onClick={() => onShowPage('rooms')} className="hover:text-cyan-400 transition-colors text-left">Rooms</button></li>
-              <li><button onClick={() => onShowPage('stands')} className="hover:text-cyan-400 transition-colors text-left">Stands</button></li>
-              <li><button onClick={() => onShowPage('commercial')} className="hover:text-cyan-400 transition-colors text-left">Commercial Properties</button></li>
-            </ul>
-          </div>
+  const { title, content } = getContent();
 
-          <div>
-            <h3 className="text-white font-semibold text-lg mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li><button onClick={() => onShowPage('about')} className="hover:text-cyan-400 transition-colors text-left">About Us</button></li>
-              <li><button onClick={() => onShowPage('how-it-works')} className="hover:text-cyan-400 transition-colors text-left">How It Works</button></li>
-              <li><button onClick={() => onShowPage('pricing')} className="hover:text-cyan-400 transition-colors text-left">Pricing</button></li>
-              <li><button onClick={() => onShowPage('faqs')} className="hover:text-cyan-400 transition-colors text-left">FAQs</button></li>
-              <li>
-                <button onClick={onShowDisclaimer} className="hover:text-cyan-400 transition-colors text-left">
-                  Terms & Disclaimer
-                </button>
-              </li>
-              <li><button onClick={() => onShowPage('privacy')} className="hover:text-cyan-400 transition-colors text-left">Privacy Policy</button></li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="text-white font-semibold text-lg mb-4">Contact Us</h3>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                <span>+263 73 611 2106</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                <a href="mailto:proplinkall@gmail.com" className="hover:text-cyan-400 transition-colors">
-                  proplinkall@gmail.com
-                </a>
-              </li>
-            </ul>
-          </div>
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-2xl w-full my-8">
+        <div className="sticky top-0 bg-white z-10 flex items-center justify-between p-6 border-b rounded-t-2xl">
+          <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        <div className="p-6 overflow-y-auto max-h-[70vh]">
+          {content}
         </div>
       </div>
-
-      <div className="border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-gray-500 text-sm text-center md:text-left">
-              © {new Date().getFullYear()} PropLink. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6 text-sm">
-              <button onClick={onShowDisclaimer} className="text-gray-500 hover:text-cyan-400 transition-colors">
-                Disclaimer
-              </button>
-              <button onClick={() => onShowPage('privacy')} className="text-gray-500 hover:text-cyan-400 transition-colors">
-                Privacy
-              </button>
-              <button onClick={() => onShowPage('about')} className="text-gray-500 hover:text-cyan-400 transition-colors">
-                Terms
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
+    </div>
   );
 };
 
-export default Footer;
+export default InfoModal;
+```
+
+Commit and it should work!
