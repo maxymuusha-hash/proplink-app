@@ -83,8 +83,8 @@ const Footer: React.FC<FooterProps> = ({ onShowDisclaimer }) => {
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                <a href="mailto:proplink@gmail.com" className="hover:text-cyan-400 transition-colors">
-                  proplink@gmail.com
+                <a href="mailto:proplinkall@gmail.com" className="hover:text-cyan-400 transition-colors">
+                  proplinkall@gmail.com
                 </a>
               </li>
             </ul>
