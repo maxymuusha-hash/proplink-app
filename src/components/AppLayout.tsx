@@ -14,6 +14,7 @@ import ListPropertyModal from './ListPropertyModal';
 import OwnerDashboard from './OwnerDashboard';
 import AdminDashboard from './AdminDashboard';
 import MapView from './MapView';
+import InfoModal from './InfoModal';
 import { Crown, Building2, Home, Briefcase, ArrowRight, LayoutGrid, Map } from 'lucide-react';
 
 interface SubscriptionAccess {
@@ -69,6 +70,8 @@ const AppLayout: React.FC = () => {
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [showListPropertyModal, setShowListPropertyModal] = useState(false);
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [infoPage, setInfoPage] = useState('');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -194,6 +197,31 @@ const AppLayout: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  const handleShowPage = (page: string) => {
+    // Property type filters
+    const propertyTypeMap: Record<string, { category?: string; type?: string; transaction?: string }> = {
+      'residential-rent': { category: 'residential', transaction: 'rent' },
+      'residential-sale': { category: 'residential', transaction: 'sale' },
+      'apartments': { category: 'residential', type: 'apartment' },
+      'rooms': { category: 'residential', type: 'room' },
+      'stands': { category: 'residential', type: 'stand' },
+      'commercial': { category: 'commercial' },
+    };
+
+    if (propertyTypeMap[page]) {
+      const filters = propertyTypeMap[page];
+      if (filters.category) setSelectedCategory(filters.category);
+      if (filters.type) setSelectedType(filters.type);
+      if (filters.transaction) setSelectedTransaction(filters.transaction);
+      setShowHero(false);
+      setCurrentView(filters.category === 'commercial' ? 'commercial' : 'residential');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setInfoPage(page);
+      setShowInfoModal(true);
+    }
+  };
 
   const filteredProperties = useMemo(() => {
     let filtered = properties;
@@ -432,7 +460,10 @@ const AppLayout: React.FC = () => {
           onUpdateStatus={handleUpdatePropertyStatus}
           onDeleteProperty={handleDeleteProperty}
         />
-        <Footer onShowDisclaimer={() => setShowDisclaimerModal(true)} />
+        <Footer
+          onShowDisclaimer={() => setShowDisclaimerModal(true)}
+          onShowPage={handleShowPage}
+        />
         {showSubscriptionModal && (
           <SubscriptionModal
             onClose={() => setShowSubscriptionModal(false)}
@@ -454,6 +485,9 @@ const AppLayout: React.FC = () => {
             userId={userId}
             userEmail={userEmail}
           />
+        )}
+        {showInfoModal && (
+          <InfoModal page={infoPage} onClose={() => setShowInfoModal(false)} />
         )}
       </div>
     );
@@ -506,7 +540,6 @@ const AppLayout: React.FC = () => {
             <p className="text-gray-500 mt-1">{filteredProperties.length} properties found</p>
           </div>
           <div className="flex items-center gap-3">
-            {/* View Mode Toggle */}
             <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => setViewMode('grid')}
@@ -681,7 +714,10 @@ const AppLayout: React.FC = () => {
         </section>
       </main>
 
-      <Footer onShowDisclaimer={() => setShowDisclaimerModal(true)} />
+      <Footer
+        onShowDisclaimer={() => setShowDisclaimerModal(true)}
+        onShowPage={handleShowPage}
+      />
 
       {showAuthModal && (
         <AuthModal onClose={() => setShowAuthModal(false)} onLogin={handleLogin} />
@@ -731,6 +767,10 @@ const AppLayout: React.FC = () => {
             setShowSubscriptionModal(true);
           }}
         />
+      )}
+
+      {showInfoModal && (
+        <InfoModal page={infoPage} onClose={() => setShowInfoModal(false)} />
       )}
     </div>
   );
