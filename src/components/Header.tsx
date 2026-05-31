@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Menu, X, User, LogOut, Building2, Crown, ChevronDown } from 'lucide-react';
 
 interface HeaderProps {
@@ -11,6 +11,7 @@ interface HeaderProps {
   onSubscribe: () => void;
   onListProperty: () => void;
   onViewDashboard: () => void;
+  onOpenAdmin?: () => void;
   currentView: string;
   setCurrentView: (view: string) => void;
 }
@@ -25,11 +26,27 @@ const Header: React.FC<HeaderProps> = ({
   onSubscribe,
   onListProperty,
   onViewDashboard,
+  onOpenAdmin,
   currentView,
   setCurrentView
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogoTap = () => {
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = setTimeout(() => {
+      tapCountRef.current = 0;
+    }, 2000);
+    if (tapCountRef.current >= 7) {
+      tapCountRef.current = 0;
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      if (onOpenAdmin) onOpenAdmin();
+    }
+  };
 
   const getSubscriptionLabel = () => {
     switch (subscriptionType) {
@@ -45,9 +62,12 @@ const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div 
+          <div
             className="flex items-center gap-2 cursor-pointer"
-            onClick={() => setCurrentView('home')}
+            onClick={() => {
+              setCurrentView('home');
+              handleLogoTap();
+            }}
           >
             <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
               <Building2 className="w-6 h-6 text-white" />
@@ -116,7 +136,7 @@ const Header: React.FC<HeaderProps> = ({
                     Subscribe
                   </button>
                 )}
-                
+
                 {/* User Menu */}
                 <div className="relative">
                   <button
@@ -237,9 +257,9 @@ const Header: React.FC<HeaderProps> = ({
               >
                 Commercial
               </button>
-              
+
               <div className="border-t my-2"></div>
-              
+
               {isLoggedIn ? (
                 <>
                   <div className="px-4 py-2">
