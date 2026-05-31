@@ -90,6 +90,12 @@ const AppLayout: React.FC = () => {
   const [ownerProperties, setOwnerProperties] = useState<Property[]>([]);
   const [loadingProperties, setLoadingProperties] = useState(false);
 
+  const handleOpenAdmin = () => {
+    if (userEmail === ADMIN_EMAIL) {
+      setShowAdminDashboard(true);
+    }
+  };
+
   const loadProperties = useCallback(async () => {
     setLoadingProperties(true);
     try {
@@ -193,9 +199,7 @@ const AppLayout: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'A') {
-        if (userEmail === ADMIN_EMAIL) {
-          setShowAdminDashboard(true);
-        }
+        handleOpenAdmin();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -451,6 +455,7 @@ const AppLayout: React.FC = () => {
           onSubscribe={() => setShowSubscriptionModal(true)}
           onListProperty={() => setShowListPropertyModal(true)}
           onViewDashboard={() => setCurrentView('dashboard')}
+          onOpenAdmin={handleOpenAdmin}
           currentView={currentView}
           setCurrentView={(view) => {
             setCurrentView(view);
@@ -518,6 +523,7 @@ const AppLayout: React.FC = () => {
           }
         }}
         onViewDashboard={() => setCurrentView('dashboard')}
+        onOpenAdmin={handleOpenAdmin}
         currentView={currentView}
         setCurrentView={(view) => {
           setCurrentView(view);
