@@ -646,9 +646,27 @@ const AppLayout: React.FC = () => {
             <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-800 mb-2">No Properties Found</h3>
             <p className="text-gray-500 mb-6">Try adjusting your filters or search query</p>
-            <button onClick={clearFilters} className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition-colors">
-              Clear Filters
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button onClick={clearFilters} className="px-6 py-3 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition-colors">
+                Clear Filters
+              </button>
+              {userType === 'owner' && (
+                <button
+                  onClick={() => setShowListPropertyModal(true)}
+                  className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+                >
+                  Be the First to List Here!
+                </button>
+              )}
+              {!isLoggedIn && (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors"
+                >
+                  List Your Property Free
+                </button>
+              )}
+            </div>
           </div>
         )}
 
