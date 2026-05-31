@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Property } from '@/types/property';
-import { MapPin, Bed, Bath, Maximize, Building2 } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, Building2, MessageCircle } from 'lucide-react';
 
 interface PropertyCardProps {
   property: Property;
@@ -8,9 +8,11 @@ interface PropertyCardProps {
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
+  const [imgError, setImgError] = useState(false);
+
   const formatPrice = (price: number, transactionType: string) => {
     if (price >= 1000) {
-      return transactionType === 'rent' 
+      return transactionType === 'rent'
         ? `$${price.toLocaleString()}/mo`
         : `$${price.toLocaleString()}`;
     }
@@ -43,8 +45,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
   const getTypeBadge = () => {
     return (
       <span className={`absolute top-3 right-3 text-xs font-semibold px-3 py-1 rounded-full ${
-        property.transactionType === 'rent' 
-          ? 'bg-cyan-500 text-white' 
+        property.transactionType === 'rent'
+          ? 'bg-cyan-500 text-white'
           : 'bg-purple-500 text-white'
       }`}>
         {property.transactionType === 'rent' ? 'For Rent' : 'For Sale'}
@@ -64,20 +66,39 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
     );
   };
 
+  const handleWhatsApp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const message = encodeURIComponent(
+      `Hi, I saw your listing on PropLink: "${property.title}" in ${property.location}. Is it still available?`
+    );
+    const phone = (property.ownerWhatsApp || property.ownerPhone || '').replace(/\D/g, '');
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+  };
+
+  const hasWhatsApp = property.ownerWhatsApp || property.ownerPhone;
+
   return (
-    <div 
+    <div
       className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer ${
         property.status !== 'available' ? 'opacity-75' : ''
       }`}
       onClick={() => onClick(property)}
     >
       {/* Image Container */}
-      <div className="relative h-48 overflow-hidden">
-        <img 
-          src={property.images[0]} 
-          alt={property.title}
-          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-        />
+      <div className="relative h-48 overflow-hidden bg-gray-100">
+        {!imgError && property.images[0] ? (
+          <img
+            src={property.images[0]}
+            alt={property.title}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+            <Building2 className="w-12 h-12 text-gray-400 mb-2" />
+            <span className="text-sm text-gray-400 font-medium capitalize">{property.type}</span>
+          </div>
+        )}
         {getStatusBadge()}
         {getTypeBadge()}
         {property.status !== 'available' && (
@@ -139,7 +160,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
         {/* Amenities Preview */}
         <div className="flex flex-wrap gap-1 mt-3">
           {property.amenities.slice(0, 3).map((amenity, index) => (
-            <span 
+            <span
               key={index}
               className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
             >
@@ -152,6 +173,17 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
             </span>
           )}
         </div>
+
+        {/* WhatsApp Button */}
+        {hasWhatsApp && property.status === 'available' && (
+          <button
+            onClick={handleWhatsApp}
+            className="mt-3 w-full flex items-center justify-center gap-2 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            Enquire on WhatsApp
+          </button>
+        )}
       </div>
     </div>
   );
