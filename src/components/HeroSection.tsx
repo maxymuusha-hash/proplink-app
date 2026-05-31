@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, Search, ArrowRight, Home, Briefcase, Key, ShoppingBag } from 'lucide-react';
+import { Building2, Search, ArrowRight, Home, Briefcase, Key, ShoppingBag, CheckCircle, Zap, Phone, MapPin } from 'lucide-react';
 
 interface HeroSectionProps {
   onBrowseProperties: () => void;
@@ -44,8 +44,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
           {/* Subheadline */}
           <p className="text-xl text-gray-300 mb-8 max-w-2xl">
-            Connect directly with property owners. Browse thousands of residential and commercial 
-            properties for rent or sale across Zimbabwe.
+            Connect directly with property owners. Browse residential and commercial 
+            properties for rent or sale across Zimbabwe — no agents, no hassle.
           </p>
 
           {/* CTA Buttons */}
@@ -67,23 +67,35 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             </button>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="text-center md:text-left">
-              <p className="text-3xl font-bold text-white">5,000+</p>
-              <p className="text-gray-400">Active Listings</p>
+          {/* Value Props — replacing fake stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <CheckCircle className="w-6 h-6 text-cyan-400 flex-shrink-0" />
+              <div>
+                <p className="text-white font-semibold text-sm">Free to List</p>
+                <p className="text-gray-400 text-xs">For all owners</p>
+              </div>
             </div>
-            <div className="text-center md:text-left">
-              <p className="text-3xl font-bold text-white">2,500+</p>
-              <p className="text-gray-400">Property Owners</p>
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <Phone className="w-6 h-6 text-cyan-400 flex-shrink-0" />
+              <div>
+                <p className="text-white font-semibold text-sm">Direct Contact</p>
+                <p className="text-gray-400 text-xs">No middlemen</p>
+              </div>
             </div>
-            <div className="text-center md:text-left">
-              <p className="text-3xl font-bold text-white">10,000+</p>
-              <p className="text-gray-400">Happy Seekers</p>
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <Zap className="w-6 h-6 text-cyan-400 flex-shrink-0" />
+              <div>
+                <p className="text-white font-semibold text-sm">Instant Access</p>
+                <p className="text-gray-400 text-xs">From just $2/month</p>
+              </div>
             </div>
-            <div className="text-center md:text-left">
-              <p className="text-3xl font-bold text-white">8</p>
-              <p className="text-gray-400">Major Cities</p>
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+              <MapPin className="w-6 h-6 text-cyan-400 flex-shrink-0" />
+              <div>
+                <p className="text-white font-semibold text-sm">Nationwide</p>
+                <p className="text-gray-400 text-xs">All towns & cities</p>
+              </div>
             </div>
           </div>
         </div>
