@@ -51,6 +51,7 @@ const rowToProperty = (row: any): Property => ({
 });
 
 const ADMIN_EMAIL = 'maxymuusha@gmail.com';
+const PAYNOW_SERVER = 'https://paynow-integration.onrender.com';
 
 const AppLayout: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -318,6 +319,14 @@ const AppLayout: React.FC = () => {
     }
     if (!disclaimerAccepted) {
       setShowDisclaimerModal(true);
+    }
+    // Notify admin of new signup
+    if (newUserEmail && newUserEmail !== ADMIN_EMAIL) {
+      fetch(`${PAYNOW_SERVER}/notify/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newUserEmail, userType: type })
+      }).catch(() => {});
     }
   };
 
