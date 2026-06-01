@@ -121,7 +121,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ tier, userId, userEmail, on
   const pollPaymentStatus = async (pollUrl: string, reference: string) => {
     let attempts = 0;
     const maxAttempts = 60;
-
     const checkStatus = async () => {
       try {
         const response = await fetch(`${PAYNOW_SERVER}/status`, {
@@ -155,7 +154,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ tier, userId, userEmail, on
         console.error('Status check error:', err);
       }
     };
-
     checkStatus();
   };
 
@@ -196,8 +194,14 @@ For support: proplinkall@gmail.com
   const currentMethod = state.method ? METHOD_CONFIG[state.method] : null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden">
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-md w-full overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6 border-b bg-gradient-to-r from-cyan-600 to-blue-600 text-white">
           <div className="flex items-center justify-between">
             <div>
