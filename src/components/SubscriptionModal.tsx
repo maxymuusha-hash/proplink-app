@@ -45,14 +45,12 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
       setIsLoading(false);
       return;
     }
-
     try {
       const { data, error } = await supabase
         .from('subscriptions')
         .select('*')
         .eq('user_id', userId)
         .eq('status', 'paid');
-
       if (!error && data) {
         setActiveSubscriptions(data);
       }
@@ -133,8 +131,14 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-4xl w-full my-8">
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-4xl w-full my-8"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6 border-b flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
@@ -195,19 +199,15 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                         Active
                       </span>
                     )}
-
                     <div className="flex items-center gap-2 mb-2">
                       {getTierIcon(tier.id)}
                       <h3 className="text-xl font-bold text-gray-800">{tier.name}</h3>
                     </div>
-
                     <div className="mb-4">
                       <span className="text-4xl font-bold text-cyan-600">${tier.price}</span>
                       <span className="text-gray-500">/month</span>
                     </div>
-
                     <p className="text-gray-600 text-sm mb-4">{tier.description}</p>
-
                     <ul className="space-y-3">
                       {tier.features.map((feature, index) => (
                         <li key={index} className="flex items-start gap-2">
@@ -216,7 +216,6 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                         </li>
                       ))}
                     </ul>
-
                     {status.active && (
                       <div className="mt-4 pt-4 border-t border-emerald-200">
                         <div className="flex items-center gap-2 text-sm text-emerald-700">
@@ -225,7 +224,6 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                         </div>
                       </div>
                     )}
-
                     {isSelected && !status.active && (
                       <div className="absolute top-4 right-4">
                         <div className="w-6 h-6 bg-cyan-500 rounded-full flex items-center justify-center">
