@@ -9,9 +9,9 @@ interface AuthModalProps {
   initialUserType?: 'owner' | 'seeker';
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ 
-  onClose, 
-  onLogin, 
+const AuthModal: React.FC<AuthModalProps> = ({
+  onClose,
+  onLogin,
   initialMode = 'login',
   initialUserType = 'seeker'
 }) => {
@@ -19,7 +19,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [userType, setUserType] = useState<'owner' | 'seeker'>(initialUserType);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -87,8 +87,14 @@ const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-md w-full my-8 overflow-hidden">
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-md w-full my-8 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6 border-b bg-gradient-to-r from-cyan-600 to-blue-600 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -137,15 +143,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 placeholder="Enter your email"
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.email ? 'border-red-500' : 'border-gray-200'}`} />
             </div>
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-            )}
+            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             {errors._suggest === 'signup' && (
-              <button
-                type="button"
-                onClick={() => { setMode('register'); setErrors({}); }}
-                className="mt-2 w-full py-2 border-2 border-cyan-500 text-cyan-600 rounded-lg font-medium hover:bg-cyan-50 transition-colors text-sm"
-              >
+              <button type="button" onClick={() => { setMode('register'); setErrors({}); }}
+                className="mt-2 w-full py-2 border-2 border-cyan-500 text-cyan-600 rounded-lg font-medium hover:bg-cyan-50 transition-colors text-sm">
                 Create a new account →
               </button>
             )}
