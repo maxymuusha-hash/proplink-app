@@ -64,7 +64,18 @@ const AuthModal: React.FC<AuthModalProps> = ({
       }
       onLogin(userType);
     } catch (err: any) {
-      setErrors({ email: err.message || 'Authentication failed' });
+      const message = err.message || '';
+      if (
+        mode === 'login' &&
+        (message.toLowerCase().includes('invalid login') ||
+          message.toLowerCase().includes('invalid credentials') ||
+          message.toLowerCase().includes('user not found') ||
+          message.toLowerCase().includes('email not confirmed'))
+      ) {
+        setErrors({ email: 'No account found. Please sign up first.', _suggest: 'signup' });
+      } else {
+        setErrors({ email: message || 'Authentication failed' });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +137,18 @@ const AuthModal: React.FC<AuthModalProps> = ({
                 placeholder="Enter your email"
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.email ? 'border-red-500' : 'border-gray-200'}`} />
             </div>
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
+            {errors._suggest === 'signup' && (
+              <button
+                type="button"
+                onClick={() => { setMode('register'); setErrors({}); }}
+                className="mt-2 w-full py-2 border-2 border-cyan-500 text-cyan-600 rounded-lg font-medium hover:bg-cyan-50 transition-colors text-sm"
+              >
+                Create a new account →
+              </button>
+            )}
           </div>
 
           {mode === 'register' && (
@@ -203,11 +225,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
           <p className="text-center text-gray-600 mt-4">
             {mode === 'login' ? (
               <>Don't have an account?{' '}
-                <button type="button" onClick={() => setMode('register')} className="text-cyan-600 font-semibold hover:underline">Sign Up</button>
+                <button type="button" onClick={() => { setMode('register'); setErrors({}); }} className="text-cyan-600 font-semibold hover:underline">Sign Up</button>
               </>
             ) : (
               <>Already have an account?{' '}
-                <button type="button" onClick={() => setMode('login')} className="text-cyan-600 font-semibold hover:underline">Sign In</button>
+                <button type="button" onClick={() => { setMode('login'); setErrors({}); }} className="text-cyan-600 font-semibold hover:underline">Sign In</button>
               </>
             )}
           </p>
