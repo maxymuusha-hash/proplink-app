@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Check, Upload, Trash2, Image } from 'lucide-react';
+import { X, Check, Upload, Trash2 } from 'lucide-react';
 import { Property, PropertyCategory, PropertyType, TransactionType, getListingTier, SubscriptionTier } from '@/types/property';
 import { CITIES } from '@/data/properties';
 import { supabase } from '@/lib/supabase';
@@ -96,43 +96,34 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
     if (uploadedImages.length + files.length > 5) {
       setUploadError('Maximum 5 images allowed');
       return;
     }
-
     setUploadingImages(true);
     setUploadError(null);
     const newUrls: string[] = [];
-
     for (const file of Array.from(files)) {
       if (file.size > 5 * 1024 * 1024) {
         setUploadError('Each image must be under 5MB');
         setUploadingImages(false);
         return;
       }
-
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-
       const { data, error } = await supabase.storage
         .from('property-images')
         .upload(fileName, file, { cacheControl: '3600', upsert: false });
-
       if (error) {
         setUploadError(`Upload failed: ${error.message}`);
         setUploadingImages(false);
         return;
       }
-
       const { data: { publicUrl } } = supabase.storage
         .from('property-images')
         .getPublicUrl(fileName);
-
       newUrls.push(publicUrl);
     }
-
     setUploadedImages(prev => [...prev, ...newUrls]);
     setUploadingImages(false);
   };
@@ -144,11 +135,9 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
   const handleSubmit = async () => {
     if (!validateStep(3)) return;
     setIsSubmitting(true);
-
     const images = uploadedImages.length > 0
       ? uploadedImages
       : ['https://d64gsuwffb70l.cloudfront.net/6946db6198d16b00e323578d_1766251491901_702fd7fe.png'];
-
     const propertyData: Partial<Property> = {
       ...formData,
       price: Number(formData.price),
@@ -157,9 +146,7 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
       size: formData.size ? Number(formData.size) : undefined,
       images
     };
-
     const tier = getListingTier(formData.category, formData.transactionType);
-
     if (tier) {
       setPendingProperty(propertyData);
       setPaymentTier(tier);
@@ -194,10 +181,7 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
         tier={paymentTier}
         userId={userId}
         userEmail={userEmail}
-        onClose={() => {
-          setShowPayment(false);
-          setPendingProperty(null);
-        }}
+        onClose={() => { setShowPayment(false); setPendingProperty(null); }}
         onSuccess={handlePaymentSuccess}
       />
     );
@@ -206,9 +190,14 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
   const listingFee = getListingTier(formData.category, formData.transactionType);
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-2xl w-full my-8 overflow-hidden">
-        {/* Header */}
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-2xl w-full my-8 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6 border-b bg-gradient-to-r from-cyan-600 to-blue-600 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -226,20 +215,15 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
           </div>
         </div>
 
-        {/* Form Content */}
         <div className="p-6 max-h-[60vh] overflow-y-auto">
           {step === 1 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Property Details</h3>
-
-              {/* Listing Fee Notice */}
               <div className={`p-3 rounded-lg text-sm ${listingFee ? 'bg-amber-50 border border-amber-200 text-amber-800' : 'bg-green-50 border border-green-200 text-green-800'}`}>
                 {listingFee
                   ? `📋 Listing fee: $${listingFee.price} (one-time) — payable after filling in details`
                   : '✅ This listing is FREE — Residential properties for rent have no listing fee'}
               </div>
-
-              {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                 <div className="grid grid-cols-2 gap-3">
@@ -255,8 +239,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   </button>
                 </div>
               </div>
-
-              {/* Property Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Property Type</label>
                 <select value={formData.type}
@@ -267,8 +249,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   ))}
                 </select>
               </div>
-
-              {/* Transaction Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Listing Type</label>
                 <div className="grid grid-cols-2 gap-3">
@@ -284,8 +264,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   </button>
                 </div>
               </div>
-
-              {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Property Title</label>
                 <input type="text" value={formData.title}
@@ -294,8 +272,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.title ? 'border-red-500' : 'border-gray-200'}`} />
                 {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
               </div>
-
-              {/* Price */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Price (USD) {formData.transactionType === 'rent' && 'per month'}
@@ -306,8 +282,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.price ? 'border-red-500' : 'border-gray-200'}`} />
                 {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price}</p>}
               </div>
-
-              {/* Location */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
@@ -334,36 +308,26 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
           {step === 2 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Property Features & Photos</h3>
-
-              {/* Image Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Property Photos ({uploadedImages.length}/5)
                 </label>
-
-                {/* Uploaded Images Preview */}
                 {uploadedImages.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     {uploadedImages.map((url, index) => (
                       <div key={index} className="relative rounded-lg overflow-hidden h-24">
                         <img src={url} alt={`Property ${index + 1}`} className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
+                        <button type="button" onClick={() => removeImage(index)}
                           className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600">
                           <Trash2 className="w-3 h-3" />
                         </button>
                         {index === 0 && (
-                          <span className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-1.5 py-0.5 rounded">
-                            Main
-                          </span>
+                          <span className="absolute bottom-1 left-1 text-xs bg-black/50 text-white px-1.5 py-0.5 rounded">Main</span>
                         )}
                       </div>
                     ))}
                   </div>
                 )}
-
-                {/* Upload Button */}
                 {uploadedImages.length < 5 && (
                   <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${uploadingImages ? 'border-cyan-300 bg-cyan-50' : 'border-gray-300 hover:border-cyan-400 hover:bg-cyan-50'}`}>
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -384,14 +348,11 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                       onChange={handleImageUpload} disabled={uploadingImages} />
                   </label>
                 )}
-
                 {uploadError && <p className="text-red-500 text-sm mt-1">{uploadError}</p>}
                 {uploadedImages.length === 0 && (
                   <p className="text-xs text-gray-400 mt-1">If no photos uploaded, a placeholder image will be used</p>
                 )}
               </div>
-
-              {/* Size and Rooms */}
               <div className="grid grid-cols-3 gap-4">
                 {(formData.category === 'residential' && formData.type !== 'stand') && (
                   <>
@@ -419,8 +380,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
                 </div>
               </div>
-
-              {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                 <textarea value={formData.description}
@@ -430,8 +389,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.description ? 'border-red-500' : 'border-gray-200'}`} />
                 {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
               </div>
-
-              {/* Amenities */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Amenities</label>
                 <div className="flex flex-wrap gap-2">
@@ -450,10 +407,7 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
           {step === 3 && (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                This information will be shown to subscribed property seekers.
-              </p>
-
+              <p className="text-sm text-gray-500 mb-4">This information will be shown to subscribed property seekers.</p>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                 <input type="tel" value={formData.ownerPhone}
@@ -462,7 +416,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.ownerPhone ? 'border-red-500' : 'border-gray-200'}`} />
                 {errors.ownerPhone && <p className="text-red-500 text-sm mt-1">{errors.ownerPhone}</p>}
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                 <input type="email" value={formData.ownerEmail}
@@ -471,7 +424,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 ${errors.ownerEmail ? 'border-red-500' : 'border-gray-200'}`} />
                 {errors.ownerEmail && <p className="text-red-500 text-sm mt-1">{errors.ownerEmail}</p>}
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (Optional)</label>
                 <input type="tel" value={formData.ownerWhatsApp}
@@ -479,8 +431,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   placeholder="+263 7X XXX XXXX"
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
               </div>
-
-              {/* Summary */}
               <div className="mt-6 p-4 bg-gray-50 rounded-xl">
                 <h4 className="font-semibold text-gray-800 mb-2">Listing Summary</h4>
                 <div className="text-sm text-gray-600 space-y-1">
@@ -491,7 +441,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
                   <p><strong>Photos:</strong> {uploadedImages.length} uploaded</p>
                 </div>
               </div>
-
               {listingFee && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
                   <p className="text-sm font-semibold text-amber-800">💳 Listing Fee Required</p>
@@ -505,7 +454,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
         <div className="p-6 border-t bg-gray-50 flex justify-between">
           {step > 1 ? (
             <button onClick={() => setStep(step - 1)}
@@ -518,7 +466,6 @@ const ListPropertyModal: React.FC<ListPropertyModalProps> = ({
               Cancel
             </button>
           )}
-
           {step < 3 ? (
             <button onClick={handleNext}
               className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-lg font-semibold hover:from-cyan-700 hover:to-blue-700 transition-all">
