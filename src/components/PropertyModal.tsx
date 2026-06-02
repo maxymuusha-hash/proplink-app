@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { Property } from '@/types/property';
 import { 
   X, MapPin, Bed, Bath, Maximize, Phone, Mail, MessageCircle, 
-  Lock, ChevronLeft, ChevronRight, Building2, Calendar, Check, Loader2
+  Lock, ChevronLeft, ChevronRight, Building2, Calendar, Check,
+  ShieldCheck, Flag
 } from 'lucide-react';
+
+const PAYNOW_SERVER = 'https://paynow-integration.onrender.com';
 
 interface PropertyModalProps {
   property: Property;
@@ -21,6 +24,10 @@ const PropertyModal: React.FC<PropertyModalProps> = ({
   subscriptionType 
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportSubmitted, setReportSubmitted] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const formatPrice = (price: number, transactionType: string) => {
     if (price >= 1000) {
@@ -31,10 +38,9 @@ const PropertyModal: React.FC<PropertyModalProps> = ({
     return transactionType === 'rent' ? `$${price}/month` : `$${price}`;
   };
 
-  // Commercial rental is FREE for seekers — always show contact
   const canViewContact = () => {
     if (property.category === 'commercial' && property.transactionType === 'rent') {
-      return true; // FREE
+      return true;
     }
     return hasSubscription;
   };
@@ -42,12 +48,6 @@ const PropertyModal: React.FC<PropertyModalProps> = ({
   const getRequiredSubscription = () => {
     if (property.category === 'residential' && property.transactionType === 'rent') {
       return 'Residential Rental ($2/month)';
-    }
-    if (property.category === 'residential' && property.transactionType === 'sale') {
-      return 'a subscription';
-    }
-    if (property.category === 'commercial' && property.transactionType === 'sale') {
-      return 'a subscription';
     }
     return 'a subscription';
   };
@@ -64,15 +64,54 @@ const PropertyModal: React.FC<PropertyModalProps> = ({
     );
   };
 
+  const handleReport = async () => {
+    if (!reportReason.trim()) return;
+    setReportLoading(true);
+    try {
+      await fetch(`${PAYNOW_SERVER}/notify/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyId: property.id,
+          propertyTitle: property.title,
+          ownerName: property.ownerName,
+          ownerEmail: property.ownerEmail,
+          reason: reportReason,
+        })
+      });
+      setReportSubmitted(true);
+    } catch (err) {
+      console.error('Report error:', err);
+      setReportSubmitted(true); // still show success to user
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="sticky top-0 bg-white z-10 flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-bold text-gray-800">Property Details</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowReportModal(true); }}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <Flag className="w-4 h-4" />
+              Report
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Image Gallery */}
@@ -100,8 +139,6 @@ const PropertyModal: React.FC<PropertyModalProps> = ({
               </div>
             </>
           )}
-          
-          {/* Status Badge */}
           <div className="absolute top-4 left-4 flex gap-2">
             <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
               property.status === 'available' ? 'bg-emerald-500 text-white' :
@@ -136,6 +173,11 @@ const PropertyModal: React.FC<PropertyModalProps> = ({
             <div className="flex items-center text-gray-500 mt-2">
               <MapPin className="w-5 h-5 mr-2" />
               <span>{property.location}</span>
+            </div>
+            {/* Direct Owner Badge */}
+            <div className="flex items-center gap-1 mt-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-semibold text-emerald-700">Direct Owner Listing — No Agent Fees</span>
             </div>
           </div>
 
@@ -211,7 +253,6 @@ const PropertyModal: React.FC<PropertyModalProps> = ({
           {property.status === 'available' ? (
             <div className="border-t pt-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Property Owner</h3>
-
               {canViewContact() ? (
                 <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-4">
                   {property.category === 'commercial' && property.transactionType === 'rent' && (
@@ -269,6 +310,86 @@ const PropertyModal: React.FC<PropertyModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div
+          className="fixed inset-0 bg-black/70 z-60 flex items-center justify-center p-4"
+          onClick={() => setShowReportModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {reportSubmitted ? (
+              <div className="text-center py-4">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-8 h-8 text-emerald-600" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Report Submitted</h3>
+                <p className="text-gray-600 text-sm mb-4">Thank you. We will review this listing and take action if necessary.</p>
+                <button
+                  onClick={() => { setShowReportModal(false); setReportSubmitted(false); setReportReason(''); }}
+                  className="px-6 py-2 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Flag className="w-5 h-5 text-red-500" />
+                    <h3 className="text-lg font-bold text-gray-800">Report Listing</h3>
+                  </div>
+                  <button onClick={() => setShowReportModal(false)} className="p-1 hover:bg-gray-100 rounded-full">
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Help us keep PropLink agent-free. Select a reason for reporting this listing:
+                </p>
+                <div className="space-y-2 mb-4">
+                  {[
+                    'This is an agent, not a direct owner',
+                    'This listing is fake or fraudulent',
+                    'The property does not exist',
+                    'Incorrect information in the listing',
+                    'Other',
+                  ].map((reason) => (
+                    <button
+                      key={reason}
+                      onClick={() => setReportReason(reason)}
+                      className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-all ${
+                        reportReason === reason
+                          ? 'border-red-400 bg-red-50 text-red-700 font-medium'
+                          : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                      }`}
+                    >
+                      {reason}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowReportModal(false)}
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleReport}
+                    disabled={!reportReason || reportLoading}
+                    className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition-colors disabled:opacity-50"
+                  >
+                    {reportLoading ? 'Sending...' : 'Submit Report'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
