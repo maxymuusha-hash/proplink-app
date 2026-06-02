@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, Lock, Building2, Search, Eye, EyeOff } from 'lucide-react';
+import { X, User, Mail, Phone, Lock, Building2, Search, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface AuthModalProps {
@@ -19,6 +19,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [userType, setUserType] = useState<'owner' | 'seeker'>(initialUserType);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [ownerDeclaration, setOwnerDeclaration] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -39,6 +40,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
     if (!formData.password) newErrors.password = 'Password is required';
     else if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     if (mode === 'register' && formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (mode === 'register' && userType === 'owner' && !ownerDeclaration) {
+      newErrors.ownerDeclaration = 'You must confirm you are a direct property owner to continue';
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -110,11 +114,11 @@ const AuthModal: React.FC<AuthModalProps> = ({
         <div className="p-4 bg-gray-50 border-b">
           <p className="text-sm text-gray-600 mb-2 text-center">I am a:</p>
           <div className="grid grid-cols-2 gap-3">
-            <button type="button" onClick={() => setUserType('owner')}
+            <button type="button" onClick={() => { setUserType('owner'); setOwnerDeclaration(false); }}
               className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${userType === 'owner' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : 'border-gray-200 hover:border-gray-300'}`}>
               <Building2 className="w-5 h-5" /><span className="font-medium">Property Owner</span>
             </button>
-            <button type="button" onClick={() => setUserType('seeker')}
+            <button type="button" onClick={() => { setUserType('seeker'); setOwnerDeclaration(false); }}
               className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${userType === 'seeker' ? 'border-cyan-500 bg-cyan-50 text-cyan-700' : 'border-gray-200 hover:border-gray-300'}`}>
               <Search className="w-5 h-5" /><span className="font-medium">Property Seeker</span>
             </button>
@@ -205,6 +209,35 @@ const AuthModal: React.FC<AuthModalProps> = ({
                   <><li>• Browse all properties for FREE</li><li>• Subscribe to view owner contacts</li><li>• Save favorite properties</li></>
                 )}
               </ul>
+            </div>
+          )}
+
+          {/* Owner Declaration */}
+          {mode === 'register' && userType === 'owner' && (
+            <div className={`mb-6 p-4 rounded-lg border ${errors.ownerDeclaration ? 'bg-red-50 border-red-300' : 'bg-amber-50 border-amber-200'}`}>
+              <div className="flex items-start gap-3 mb-2">
+                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm font-semibold text-amber-800">Direct Owner Declaration</p>
+              </div>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={ownerDeclaration}
+                  onChange={(e) => {
+                    setOwnerDeclaration(e.target.checked);
+                    if (errors.ownerDeclaration) setErrors(prev => ({ ...prev, ownerDeclaration: '' }));
+                  }}
+                  className="w-5 h-5 mt-0.5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500 flex-shrink-0"
+                />
+                <span className="text-sm text-amber-800">
+                  I declare that I am the <strong>direct owner</strong> of the properties I will list.
+                  I am <strong>not a real estate agent or broker</strong>. I understand that listing
+                  as an agent is strictly prohibited and may result in permanent account suspension.
+                </span>
+              </label>
+              {errors.ownerDeclaration && (
+                <p className="text-red-600 text-sm mt-2 font-medium">{errors.ownerDeclaration}</p>
+              )}
             </div>
           )}
 
