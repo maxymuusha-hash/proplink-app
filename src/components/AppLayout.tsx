@@ -395,7 +395,22 @@ const AppLayout: React.FC = () => {
       if (!error && data) {
         const newProperty = rowToProperty(data);
         setProperties(prev => [newProperty, ...prev]);
-        setOwnerProperties(prev => [newProperty, ...prev]);
+        const updatedOwnerProperties = [newProperty, ...ownerProperties];
+        setOwnerProperties(updatedOwnerProperties);
+
+        // Alert admin if owner has 4+ listings (possible agent)
+        if (updatedOwnerProperties.length >= 4) {
+          fetch(`${PAYNOW_SERVER}/notify/listing-alert`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ownerName: userName,
+              ownerEmail: userEmail,
+              ownerId: userId,
+              listingCount: updatedOwnerProperties.length
+            })
+          }).catch(() => {});
+        }
       } else {
         console.error('Error saving property:', error);
       }
