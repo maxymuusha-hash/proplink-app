@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Users, Building2, DollarSign, AlertTriangle, Search,
-  TrendingUp, RefreshCw
+  Users, Building2, DollarSign, Search,
+  TrendingUp, RefreshCw, Flag, AlertTriangle, ShieldCheck, ShieldX
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -10,14 +10,15 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'listings' | 'payments'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'listings' | 'payments' | 'reports'>('overview');
   const [searchQuery, setSearchQuery] = useState('');
-  const [userFilter, setUserFilter] = useState<'all' | 'owner' | 'seeker'>('all');
+  const [userFilter, setUserFilter] = useState<'all' | 'owner' | 'seeker' | 'flagged'>('all');
   const [loading, setLoading] = useState(true);
 
   const [users, setUsers] = useState<any[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeListings: 0,
@@ -26,6 +27,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     newSignupsToday: 0,
     newSignupsThisWeek: 0,
     newSignupsThisMonth: 0,
+    flaggedOwners: 0,
+    totalReports: 0,
   });
 
   const loadData = async () => {
@@ -46,12 +49,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         .select('*')
         .order('created_at', { ascending: false });
 
+      const { data: reportsData } = await supabase
+        .from('listing_reports')
+        .select('*')
+        .order('created_at', { ascending: false });
+
       const subs = subsData || [];
       const props = propsData || [];
       const allUsers = usersData || [];
+      const allReports = reportsData || [];
 
       setSubscriptions(subs);
       setProperties(props);
+      setReports(allReports);
 
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -68,6 +78,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       const newWeek = allUsers.filter(u => new Date(u.created_at) >= weekStart).length;
       const newMonth = allUsers.filter(u => new Date(u.created_at) >= monthStart).length;
 
+      // Build user list
+      const userMap = new Map<string, any>();
+      allUsers.forEach(u => {
+        const listingCount = props.filter(p => p.owner_id === u.id).length;
+        userMap.set(u.id, {
+          id: u.id,
+          email: u.email || 'N/A',
+          name: u.full_name || u.email?.split('@')[0] || 'User',
+          userType: u.user_type || 'seeker',
+          status: 'active',
+          subscriptionType: subs.find(s => s.user_id === u.id)?.subscription_type || null,
+          listingsCount: listingCount,
+          isFlagged: listingCount >= 4,
+          createdAt: u.created_at,
+        });
+      });
+
+      const allUsersArr = Array.from(userMap.values());
+      const flaggedCount = allUsersArr.filter(u => u.isFlagged).length;
+
       setStats({
         totalUsers: allUsers.length,
         activeListings: props.filter(p => p.status === 'available').length,
@@ -76,24 +106,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
         newSignupsToday: newToday,
         newSignupsThisWeek: newWeek,
         newSignupsThisMonth: newMonth,
+        flaggedOwners: flaggedCount,
+        totalReports: allReports.length,
       });
 
-      // Build user list from real auth users
-      const userMap = new Map<string, any>();
-      allUsers.forEach(u => {
-        userMap.set(u.id, {
-          id: u.id,
-          email: u.email || 'N/A',
-          name: u.full_name || u.email?.split('@')[0] || 'User',
-          userType: u.user_type || 'seeker',
-          status: 'active',
-          subscriptionType: subs.find(s => s.user_id === u.id)?.subscription_type || null,
-          listingsCount: props.filter(p => p.owner_id === u.id).length,
-          createdAt: u.created_at,
-        });
-      });
-
-      setUsers(Array.from(userMap.values()));
+      setUsers(allUsersArr);
 
     } catch (err) {
       console.error('Error loading admin data:', err);
@@ -109,11 +126,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = userFilter === 'all' || user.userType === userFilter;
+    const matchesFilter =
+      userFilter === 'all' ? true :
+      userFilter === 'flagged' ? user.isFlagged :
+      user.userType === userFilter;
     return matchesSearch && matchesFilter;
   });
 
   const paidSubscriptions = subscriptions.filter(s => s.status === 'paid');
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: TrendingUp },
+    { id: 'users', label: 'Users', icon: Users },
+    { id: 'listings', label: 'Listings', icon: Building2 },
+    { id: 'payments', label: 'Payments', icon: DollarSign },
+    { id: 'reports', label: `Reports${stats.totalReports > 0 ? ` (${stats.totalReports})` : ''}`, icon: Flag },
+  ];
 
   return (
     <div className="fixed inset-0 bg-gray-100 z-50 overflow-y-auto">
@@ -143,17 +171,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
-          {[
-            { id: 'overview', label: 'Overview', icon: TrendingUp },
-            { id: 'users', label: 'Users', icon: Users },
-            { id: 'listings', label: 'Listings', icon: Building2 },
-            { id: 'payments', label: 'Payments', icon: DollarSign }
-          ].map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-                activeTab === tab.id ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                activeTab === tab.id ? 'bg-purple-600 text-white' :
+                tab.id === 'reports' && stats.totalReports > 0 ? 'bg-red-50 text-red-600 hover:bg-red-100' :
+                'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >
               <tab.icon className="w-5 h-5" />
@@ -205,6 +230,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                   </div>
                 </div>
 
+                {/* Alerts row */}
+                {(stats.flaggedOwners > 0 || stats.totalReports > 0) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {stats.flaggedOwners > 0 && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <AlertTriangle className="w-6 h-6 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-amber-800">{stats.flaggedOwners} Flagged Owner{stats.flaggedOwners > 1 ? 's' : ''}</p>
+                          <p className="text-sm text-amber-700">Owner(s) with 4+ listings — possible agents</p>
+                          <button onClick={() => { setActiveTab('users'); setUserFilter('flagged'); }}
+                            className="text-xs text-amber-600 font-medium hover:underline mt-1">
+                            View flagged owners →
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {stats.totalReports > 0 && (
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Flag className="w-6 h-6 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-red-800">{stats.totalReports} Listing Report{stats.totalReports > 1 ? 's' : ''}</p>
+                          <p className="text-sm text-red-700">Users have reported suspicious listings</p>
+                          <button onClick={() => setActiveTab('reports')}
+                            className="text-xs text-red-600 font-medium hover:underline mt-1">
+                            View reports →
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-white rounded-xl shadow-sm p-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">Signup Activity</h3>
@@ -218,10 +279,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                         <div key={item.label} className="flex items-center gap-4">
                           <span className="w-28 text-sm text-gray-600">{item.label}</span>
                           <div className="flex-1 bg-gray-100 rounded-full h-3">
-                            <div
-                              className={`${item.color} h-3 rounded-full transition-all`}
-                              style={{ width: stats.totalUsers > 0 ? `${Math.min((item.value / Math.max(stats.totalUsers, 1)) * 100, 100)}%` : '0%' }}
-                            />
+                            <div className={`${item.color} h-3 rounded-full transition-all`}
+                              style={{ width: stats.totalUsers > 0 ? `${Math.min((item.value / Math.max(stats.totalUsers, 1)) * 100, 100)}%` : '0%' }} />
                           </div>
                           <span className="w-8 text-sm font-semibold text-gray-800 text-right">{item.value}</span>
                         </div>
@@ -242,10 +301,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                           <div key={item.type} className="flex items-center gap-4">
                             <span className="w-40 text-sm text-gray-600">{item.label}</span>
                             <div className="flex-1 bg-gray-100 rounded-full h-3">
-                              <div
-                                className={`${item.color} h-3 rounded-full`}
-                                style={{ width: paidSubscriptions.length > 0 ? `${(count / paidSubscriptions.length) * 100}%` : '0%' }}
-                              />
+                              <div className={`${item.color} h-3 rounded-full`}
+                                style={{ width: paidSubscriptions.length > 0 ? `${(count / paidSubscriptions.length) * 100}%` : '0%' }} />
                             </div>
                             <span className="w-8 text-sm font-semibold text-gray-800 text-right">{count}</span>
                           </div>
@@ -270,7 +327,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                             <Users className="w-5 h-5 text-blue-600" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-gray-800 font-medium">{user.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-gray-800 font-medium">{user.name}</p>
+                              {user.isFlagged && (
+                                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <AlertTriangle className="w-3 h-3" /> Flagged
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-500">{user.email}</p>
                           </div>
                           <div className="text-right">
@@ -302,16 +366,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                       className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                   </div>
-                  <div className="flex gap-2">
-                    {['all', 'owner', 'seeker'].map((filter) => (
+                  <div className="flex gap-2 flex-wrap">
+                    {[
+                      { id: 'all', label: 'All' },
+                      { id: 'owner', label: 'Owners' },
+                      { id: 'seeker', label: 'Seekers' },
+                      { id: 'flagged', label: '⚠️ Flagged' },
+                    ].map((filter) => (
                       <button
-                        key={filter}
-                        onClick={() => setUserFilter(filter as any)}
+                        key={filter.id}
+                        onClick={() => setUserFilter(filter.id as any)}
                         className={`px-4 py-2 rounded-lg font-medium capitalize ${
-                          userFilter === filter ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          userFilter === filter.id
+                            ? filter.id === 'flagged' ? 'bg-amber-500 text-white' : 'bg-purple-600 text-white'
+                            : filter.id === 'flagged' ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                       >
-                        {filter === 'all' ? 'All' : `${filter}s`}
+                        {filter.label}
+                        {filter.id === 'flagged' && stats.flaggedOwners > 0 && (
+                          <span className="ml-1 bg-amber-600 text-white text-xs px-1.5 py-0.5 rounded-full">{stats.flaggedOwners}</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -329,15 +403,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                           <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">User</th>
                           <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Type</th>
                           <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Details</th>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Status</th>
                           <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Joined</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
                         {filteredUsers.map((user) => (
-                          <tr key={user.id} className="hover:bg-gray-50">
+                          <tr key={user.id} className={`hover:bg-gray-50 ${user.isFlagged ? 'bg-amber-50' : ''}`}>
                             <td className="px-6 py-4">
-                              <p className="font-medium text-gray-800">{user.name}</p>
-                              <p className="text-sm text-gray-500">{user.email}</p>
+                              <div className="flex items-center gap-2">
+                                <div>
+                                  <p className="font-medium text-gray-800">{user.name}</p>
+                                  <p className="text-sm text-gray-500">{user.email}</p>
+                                </div>
+                              </div>
                             </td>
                             <td className="px-6 py-4">
                               <span className={`text-xs font-medium px-2 py-1 rounded ${
@@ -352,6 +431,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                                 : user.subscriptionType
                                   ? user.subscriptionType.replace(/_/g, ' ')
                                   : 'No subscription'}
+                            </td>
+                            <td className="px-6 py-4">
+                              {user.isFlagged ? (
+                                <span className="flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-100 px-2 py-1 rounded-full w-fit">
+                                  <AlertTriangle className="w-3 h-3" /> Possible Agent
+                                </span>
+                              ) : user.userType === 'owner' ? (
+                                <span className="flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full w-fit">
+                                  <ShieldCheck className="w-3 h-3" /> Normal
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-full w-fit">
+                                  <ShieldCheck className="w-3 h-3" /> Active
+                                </span>
+                              )}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
                               {new Date(user.createdAt).toLocaleDateString()}
@@ -389,27 +483,39 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {properties.map((p) => (
-                          <tr key={p.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4">
-                              <p className="font-medium text-gray-800">{p.title}</p>
-                              <p className="text-sm text-gray-500">{p.city}</p>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600 capitalize">{p.type} · {p.transaction_type}</td>
-                            <td className="px-6 py-4 text-sm font-medium text-gray-800">${p.price?.toLocaleString()}</td>
-                            <td className="px-6 py-4">
-                              <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                p.status === 'available' ? 'bg-emerald-100 text-emerald-700' :
-                                p.status === 'sold' ? 'bg-gray-100 text-gray-600' :
-                                'bg-amber-100 text-amber-700'
-                              }`}>
-                                {p.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">{p.owner_name}</td>
-                            <td className="px-6 py-4 text-sm text-gray-500">{new Date(p.created_at).toLocaleDateString()}</td>
-                          </tr>
-                        ))}
+                        {properties.map((p) => {
+                          const ownerListingCount = properties.filter(x => x.owner_id === p.owner_id).length;
+                          return (
+                            <tr key={p.id} className={`hover:bg-gray-50 ${ownerListingCount >= 4 ? 'bg-amber-50' : ''}`}>
+                              <td className="px-6 py-4">
+                                <p className="font-medium text-gray-800">{p.title}</p>
+                                <p className="text-sm text-gray-500">{p.city}</p>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-600 capitalize">{p.type} · {p.transaction_type}</td>
+                              <td className="px-6 py-4 text-sm font-medium text-gray-800">${p.price?.toLocaleString()}</td>
+                              <td className="px-6 py-4">
+                                <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                  p.status === 'available' ? 'bg-emerald-100 text-emerald-700' :
+                                  p.status === 'sold' ? 'bg-gray-100 text-gray-600' :
+                                  'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {p.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-600">
+                                <div className="flex items-center gap-1">
+                                  {p.owner_name}
+                                  {ownerListingCount >= 4 && (
+                                    <span title="Owner has 4+ listings">
+                                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500">{new Date(p.created_at).toLocaleDateString()}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   )}
@@ -460,6 +566,63 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500">
                               {new Date(sub.created_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'reports' && (
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="p-4 border-b flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-800">
+                    Reported Listings ({reports.length})
+                  </h3>
+                  {reports.length > 0 && (
+                    <span className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full font-medium">
+                      Requires Review
+                    </span>
+                  )}
+                </div>
+                <div className="overflow-x-auto">
+                  {reports.length === 0 ? (
+                    <div className="text-center py-16 text-gray-400">
+                      <ShieldCheck className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p className="font-medium">No reports yet</p>
+                      <p className="text-sm mt-1">All listings are clean!</p>
+                    </div>
+                  ) : (
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Property</th>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Reason</th>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Owner</th>
+                          <th className="px-6 py-4 text-left text-sm font-semibold text-gray-600">Reported</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {reports.map((report, i) => (
+                          <tr key={i} className="hover:bg-red-50">
+                            <td className="px-6 py-4">
+                              <p className="font-medium text-gray-800">{report.property_title || 'Unknown'}</p>
+                              <p className="text-xs text-gray-400">ID: {report.property_id?.slice(0, 8)}...</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm text-red-700 bg-red-50 px-2 py-1 rounded">
+                                {report.reason}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600">
+                              <p>{report.owner_name || 'N/A'}</p>
+                              <p className="text-xs text-gray-400">{report.owner_email || ''}</p>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {report.created_at ? new Date(report.created_at).toLocaleDateString() : 'N/A'}
                             </td>
                           </tr>
                         ))}
