@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Property } from '@/types/property';
-import { MapPin, Bed, Bath, Maximize, Building2, MessageCircle } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, Building2, MessageCircle, ShieldCheck } from 'lucide-react';
 
 interface PropertyCardProps {
   property: Property;
@@ -124,9 +124,15 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
         </h3>
 
         {/* Location */}
-        <div className="flex items-center text-gray-500 mb-3">
+        <div className="flex items-center text-gray-500 mb-2">
           <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
           <span className="text-sm truncate">{property.location}</span>
+        </div>
+
+        {/* Direct Owner Badge */}
+        <div className="flex items-center gap-1 mb-3">
+          <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <span className="text-xs font-semibold text-emerald-700">Direct Owner Listing</span>
         </div>
 
         {/* Property Details */}
