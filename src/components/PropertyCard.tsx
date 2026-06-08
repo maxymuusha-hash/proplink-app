@@ -85,12 +85,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick }) => {
       onClick={() => onClick(property)}
     >
       {/* Image Container */}
-      <div className="relative h-48 overflow-hidden bg-gray-100">
+      <div className="relative h-48 overflow-hidden bg-gray-50">
         {!imgError && property.images[0] ? (
           <img
             src={property.images[0]}
             alt={property.title}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            className="w-full h-full object-contain bg-gray-50 transition-transform duration-300 hover:scale-105"
             onError={() => setImgError(true)}
           />
         ) : (
