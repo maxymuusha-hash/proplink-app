@@ -82,7 +82,7 @@ const PropertyModal: React.FC<PropertyModalProps> = ({
       setReportSubmitted(true);
     } catch (err) {
       console.error('Report error:', err);
-      setReportSubmitted(true); // still show success to user
+      setReportSubmitted(true);
     } finally {
       setReportLoading(false);
     }
@@ -115,11 +115,11 @@ const PropertyModal: React.FC<PropertyModalProps> = ({
         </div>
 
         {/* Image Gallery */}
-        <div className="relative h-64 md:h-96 bg-gray-100">
+        <div className="relative h-64 md:h-96 bg-black">
           <img 
             src={property.images[currentImageIndex]} 
             alt={property.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain bg-black"
           />
           {property.images.length > 1 && (
             <>
