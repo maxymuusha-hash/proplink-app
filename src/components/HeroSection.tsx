@@ -1,5 +1,5 @@
-import React from 'react';
-import { Building2, Search, ArrowRight, Home, Briefcase, Key, ShoppingBag, CheckCircle, Zap, Phone, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Building2, Search, ArrowRight, Home, Briefcase, Key, ShoppingBag, CheckCircle, Zap, Phone, MapPin, Download, X } from 'lucide-react';
 
 interface HeroSectionProps {
   onBrowseProperties: () => void;
@@ -14,8 +14,90 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   onLogin,
   isLoggedIn
 }) => {
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [showBanner, setShowBanner] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+      return;
+    }
+
+    // Check if user previously dismissed
+    const dismissed = localStorage.getItem('pwa_banner_dismissed');
+    if (dismissed) return;
+
+    // Capture install prompt
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setShowBanner(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    // Listen for successful install
+    window.addEventListener('appinstalled', () => {
+      setIsInstalled(true);
+      setShowBanner(false);
+    });
+
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstalled(true);
+      setShowBanner(false);
+    }
+    setInstallPrompt(null);
+  };
+
+  const handleDismiss = () => {
+    setShowBanner(false);
+    localStorage.setItem('pwa_banner_dismissed', 'true');
+  };
+
   return (
     <section className="relative overflow-hidden">
+
+      {/* PWA Install Banner */}
+      {showBanner && !isInstalled && (
+        <div className="relative z-50 bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 py-3">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Building2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Install PropLink App</p>
+                <p className="text-cyan-100 text-xs">Add to your home screen for quick access</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={handleInstall}
+                className="flex items-center gap-1.5 px-4 py-2 bg-white text-cyan-600 rounded-lg font-semibold text-sm hover:bg-cyan-50 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                Install
+              </button>
+              <button
+                onClick={handleDismiss}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
         <img 
@@ -67,7 +149,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             </button>
           </div>
 
-          {/* Value Props — replacing fake stats */}
+          {/* Value Props */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
               <CheckCircle className="w-6 h-6 text-cyan-400 flex-shrink-0" />
