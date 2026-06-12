@@ -1,30 +1,18 @@
-const CACHE_NAME = 'proplink-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/favicon.svg',
-  '/manifest.json'
-];
+// Simple service worker — network first strategy
+const CACHE_NAME = 'proplink-v2';
 
-// Install service worker
+// Install
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
-  );
   self.skipWaiting();
 });
 
-// Activate service worker
+// Activate — clear old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+          return caches.delete(cacheName);
         })
       );
     })
@@ -32,14 +20,15 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch from cache or network
+// Fetch — always try network first, fall back to cache
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
+    fetch(event.request)
+      .then((response) => {
         return response;
-      }
-      return fetch(event.request);
-    })
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
   );
 });
