@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Users, Building2, DollarSign, Search,
-  TrendingUp, RefreshCw, Flag, AlertTriangle, ShieldCheck, ShieldX
+  TrendingUp, RefreshCw, Flag, AlertTriangle, ShieldCheck, BarChart2, ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -78,7 +78,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
       const newWeek = allUsers.filter(u => new Date(u.created_at) >= weekStart).length;
       const newMonth = allUsers.filter(u => new Date(u.created_at) >= monthStart).length;
 
-      // Build user list
       const userMap = new Map<string, any>();
       allUsers.forEach(u => {
         const listingCount = props.filter(p => p.owner_id === u.id).length;
@@ -158,6 +157,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {/* Google Analytics Button */}
+              
+                href="https://analytics.google.com/analytics/web/#/p539313917/reports/intelligenthome"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors text-sm"
+              >
+                <BarChart2 className="w-4 h-4" />
+                Analytics
+                <ExternalLink className="w-3 h-3" />
+              </a>
               <button onClick={loadData} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
                 <RefreshCw className="w-5 h-5 text-gray-600" />
               </button>
@@ -195,6 +205,45 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
           <>
             {activeTab === 'overview' && (
               <div className="space-y-6">
+
+                {/* Google Analytics Card */}
+                <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl p-6 text-white">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <BarChart2 className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold">Website Traffic & Analytics</h3>
+                        <p className="text-orange-100 text-sm">See how many people are visiting PropLink</p>
+                      </div>
+                    </div>
+                    
+                      href="https://analytics.google.com/analytics/web/#/p539313917/reports/intelligenthome"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-white text-orange-600 rounded-lg font-semibold hover:bg-orange-50 transition-colors text-sm"
+                    >
+                      Open Analytics
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div className="bg-white/10 rounded-lg p-3 text-center">
+                      <p className="text-white/70 text-xs">Visitors</p>
+                      <p className="text-white font-bold text-lg">Live on GA</p>
+                    </div>
+                    <div className="bg-white/10 rounded-lg p-3 text-center">
+                      <p className="text-white/70 text-xs">Countries</p>
+                      <p className="text-white font-bold text-lg">Live on GA</p>
+                    </div>
+                    <div className="bg-white/10 rounded-lg p-3 text-center">
+                      <p className="text-white/70 text-xs">Devices</p>
+                      <p className="text-white font-bold text-lg">Live on GA</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-white rounded-xl p-6 shadow-sm">
                     <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
@@ -230,7 +279,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                   </div>
                 </div>
 
-                {/* Alerts row */}
                 {(stats.flaggedOwners > 0 || stats.totalReports > 0) && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {stats.flaggedOwners > 0 && (
