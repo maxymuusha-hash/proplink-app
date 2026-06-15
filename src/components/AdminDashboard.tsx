@@ -122,6 +122,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
     loadData();
   }, []);
 
+  const openAnalytics = () => {
+    window.open('https://analytics.google.com/analytics/web/#/p539313917/reports/intelligenthome', '_blank');
+  };
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
@@ -157,17 +161,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {/* Google Analytics Button */}
-              
-                href="https://analytics.google.com/analytics/web/#/p539313917/reports/intelligenthome"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={openAnalytics}
                 className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-colors text-sm"
               >
                 <BarChart2 className="w-4 h-4" />
                 Analytics
                 <ExternalLink className="w-3 h-3" />
-              </a>
+              </button>
               <button onClick={loadData} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Refresh">
                 <RefreshCw className="w-5 h-5 text-gray-600" />
               </button>
@@ -208,7 +209,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
 
                 {/* Google Analytics Card */}
                 <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl p-6 text-white">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                         <BarChart2 className="w-6 h-6 text-white" />
@@ -218,15 +219,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onClose }) => {
                         <p className="text-orange-100 text-sm">See how many people are visiting PropLink</p>
                       </div>
                     </div>
-                    
-                      href="https://analytics.google.com/analytics/web/#/p539313917/reports/intelligenthome"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={openAnalytics}
                       className="flex items-center gap-2 px-5 py-2.5 bg-white text-orange-600 rounded-lg font-semibold hover:bg-orange-50 transition-colors text-sm"
                     >
                       Open Analytics
                       <ExternalLink className="w-4 h-4" />
-                    </a>
+                    </button>
                   </div>
                   <div className="grid grid-cols-3 gap-4 mt-4">
                     <div className="bg-white/10 rounded-lg p-3 text-center">
