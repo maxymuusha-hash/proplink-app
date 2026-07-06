@@ -61,11 +61,28 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     }
   };
 
-  const handleSelectTier = (tier: SubscriptionTier) => {
-    const hasActiveTier = activeSubscriptions.some(
-      sub => sub.subscription_type === tier.accessType && sub.status === 'paid'
+  const getSubscriptionStatus = (tierAccessType: string) => {
+    const sub = activeSubscriptions.find(
+      s => s.subscription_type === tierAccessType && s.status === 'paid'
     );
-    if (hasActiveTier) return;
+    if (sub) {
+      const expiresAt = new Date(sub.expires_at);
+      const now = new Date();
+      const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const isExpired = daysLeft <= 0;
+      return {
+        active: !isExpired,
+        expired: isExpired,
+        daysLeft: Math.max(0, daysLeft),
+        expiresAt: sub.expires_at
+      };
+    }
+    return { active: false, expired: false, daysLeft: 0, expiresAt: null };
+  };
+
+  const handleSelectTier = (tier: SubscriptionTier) => {
+    const status = getSubscriptionStatus(tier.accessType);
+    if (status.active) return;
     setSelectedTier(tier);
   };
 
@@ -80,17 +97,6 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
     if (selectedTier) {
       onSubscribe(selectedTier, subscription);
     }
-  };
-
-  const getSubscriptionStatus = (tierAccessType: string) => {
-    const sub = activeSubscriptions.find(s => s.subscription_type === tierAccessType && s.status === 'paid');
-    if (sub) {
-      const expiresAt = new Date(sub.expires_at);
-      const now = new Date();
-      const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      return { active: true, daysLeft, expiresAt: sub.expires_at };
-    }
-    return { active: false, daysLeft: 0, expiresAt: null };
   };
 
   const getTierIcon = (tierId: string) => {
@@ -117,6 +123,20 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
   };
 
   const { title, subtitle } = getHeaderText();
+
+  // Get active (non-expired) subscriptions for the banner
+  const validSubscriptions = activeSubscriptions.filter(s => {
+    const expiresAt = new Date(s.expires_at);
+    const now = new Date();
+    return expiresAt > now;
+  });
+
+  // Get expired subscriptions
+  const expiredSubscriptions = activeSubscriptions.filter(s => {
+    const expiresAt = new Date(s.expires_at);
+    const now = new Date();
+    return expiresAt <= now;
+  });
 
   if (showPaymentModal && selectedTier) {
     return (
@@ -149,22 +169,41 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
           </button>
         </div>
 
-        {activeSubscriptions.length > 0 && (
+        {/* Active subscriptions banner */}
+        {validSubscriptions.length > 0 && (
           <div className="mx-6 mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
             <div className="flex items-start gap-3">
               <Check className="w-5 h-5 text-emerald-600 mt-0.5" />
               <div>
                 <p className="font-semibold text-emerald-800">Active Subscriptions</p>
                 <div className="mt-2 space-y-1">
-                  {activeSubscriptions.filter(s => s.status === 'paid').map(sub => {
+                  {validSubscriptions.map(sub => {
                     const status = getSubscriptionStatus(sub.subscription_type);
                     return (
                       <p key={sub.id} className="text-sm text-emerald-700">
-                        {sub.subscription_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} —
-                        {status.daysLeft > 0 ? ` ${status.daysLeft} days remaining` : ' Expired'}
+                        {sub.subscription_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} — {status.daysLeft} days remaining
                       </p>
                     );
                   })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Expired subscriptions banner */}
+        {expiredSubscriptions.length > 0 && (
+          <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+              <div>
+                <p className="font-semibold text-red-800">Expired Subscriptions</p>
+                <div className="mt-2 space-y-1">
+                  {expiredSubscriptions.map(sub => (
+                    <p key={sub.id} className="text-sm text-red-700">
+                      {sub.subscription_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} — Expired. Please renew below.
+                    </p>
+                  ))}
                 </div>
               </div>
             </div>
@@ -189,14 +228,21 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                     className={`relative rounded-2xl border-2 p-6 transition-all ${
                       status.active
                         ? 'border-emerald-500 bg-emerald-50 cursor-default'
-                        : isSelected
-                          ? 'border-cyan-500 bg-cyan-50 shadow-lg cursor-pointer'
-                          : 'border-gray-200 hover:border-gray-300 cursor-pointer'
+                        : status.expired
+                          ? 'border-red-300 bg-red-50 cursor-pointer hover:border-red-400'
+                          : isSelected
+                            ? 'border-cyan-500 bg-cyan-50 shadow-lg cursor-pointer'
+                            : 'border-gray-200 hover:border-gray-300 cursor-pointer'
                     }`}
                   >
                     {status.active && (
                       <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
                         Active
+                      </span>
+                    )}
+                    {status.expired && (
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                        Expired — Renew
                       </span>
                     )}
                     <div className="flex items-center gap-2 mb-2">
@@ -221,6 +267,14 @@ const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                         <div className="flex items-center gap-2 text-sm text-emerald-700">
                           <Clock className="w-4 h-4" />
                           <span>{status.daysLeft} days remaining</span>
+                        </div>
+                      </div>
+                    )}
+                    {status.expired && (
+                      <div className="mt-4 pt-4 border-t border-red-200">
+                        <div className="flex items-center gap-2 text-sm text-red-600">
+                          <AlertCircle className="w-4 h-4" />
+                          <span>Subscription expired — click to renew</span>
                         </div>
                       </div>
                     )}
