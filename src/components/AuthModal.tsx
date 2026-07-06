@@ -110,14 +110,9 @@ const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl max-w-md w-full my-8 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-md w-full my-8 overflow-hidden">
+
         {/* Header */}
         <div className="p-6 border-b bg-gradient-to-r from-cyan-600 to-blue-600 text-white">
           <div className="flex items-center justify-between">
