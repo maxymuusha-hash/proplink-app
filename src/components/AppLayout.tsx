@@ -144,13 +144,19 @@ const AppLayout: React.FC = () => {
         .eq('user_id', uid)
         .eq('status', 'paid');
       if (!error && data && data.length > 0) {
+        const now = new Date();
+        // Only count non-expired subscriptions
+        const validSubs = data.filter(s => new Date(s.expires_at) > now);
         const access = {
-          residentialRental: data.some(s => s.subscription_type === 'residential_rental'),
-          commercialRental: data.some(s => s.subscription_type === 'commercial_rental'),
-          forSale: data.some(s => s.subscription_type === 'for_sale'),
+          residentialRental: validSubs.some(s => s.subscription_type === 'residential_rental'),
+          commercialRental: validSubs.some(s => s.subscription_type === 'commercial_rental'),
+          forSale: validSubs.some(s => s.subscription_type === 'for_sale'),
         };
         setSubscriptionAccess(access);
-        setSubscriptionType(data[0].subscription_type);
+        setSubscriptionType(validSubs.length > 0 ? validSubs[0].subscription_type : null);
+      } else {
+        setSubscriptionAccess({ residentialRental: false, commercialRental: false, forSale: false });
+        setSubscriptionType(null);
       }
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
@@ -320,7 +326,6 @@ const AppLayout: React.FC = () => {
     if (!disclaimerAccepted) {
       setShowDisclaimerModal(true);
     }
-    // Notify admin of new signup
     if (newUserEmail && newUserEmail !== ADMIN_EMAIL) {
       fetch(`${PAYNOW_SERVER}/notify/signup`, {
         method: 'POST',
@@ -398,7 +403,6 @@ const AppLayout: React.FC = () => {
         const updatedOwnerProperties = [newProperty, ...ownerProperties];
         setOwnerProperties(updatedOwnerProperties);
 
-        // Alert admin if owner has 4+ listings (possible agent)
         if (updatedOwnerProperties.length >= 4) {
           fetch(`${PAYNOW_SERVER}/notify/listing-alert`, {
             method: 'POST',
