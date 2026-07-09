@@ -26,13 +26,7 @@ const Footer: React.FC<FooterProps> = ({ onShowDisclaimer, onShowPage }) => {
             </p>
             {/* Facebook only */}
             <div className="flex gap-3">
-              
-                href="https://www.facebook.com/primewavedigital"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-9 h-9 bg-gray-800 hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors"
-                title="Follow us on Facebook"
-              >
+              <a href="https://www.facebook.com/primewavedigital" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-gray-800 hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors" title="Follow us on Facebook">
                 <Facebook className="w-4 h-4" />
               </a>
             </div>
